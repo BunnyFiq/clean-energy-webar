@@ -11,7 +11,8 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
     <style>
-      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+      body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
       #ui {
         position: fixed; left: 0; right: 0; bottom: 0;
         background: rgba(15, 23, 42, 0.78);
@@ -22,6 +23,16 @@
         flex-wrap: wrap;
         align-items: center;
       }
+
+      .pill {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.12);
+        font-size: 12px;
+      }
+
+      #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
+
       button {
         padding: 10px 12px;
         border: 0;
@@ -32,159 +43,144 @@
         cursor: pointer;
       }
       button.secondary { background: #38bdf8; color: #06283d; }
-      #info {
-        width: 100%;
-        margin-top: 6px;
-        font-size: 14px;
-        opacity: 0.95;
-        line-height: 1.3;
-      }
-      #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; }
+
       input[type="range"] { width: 220px; }
-      .pill {
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.12);
-        font-size: 12px;
-      }
+      #info { width: 100%; margin-top: 6px; font-size: 14px; opacity: 0.95; line-height: 1.3; }
     </style>
   </head>
 
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <!-- Marker: Hiro preset -->
+      <a-assets>
+        <!-- Devices -->
+        <a-asset-item id="m-tv"   src="3D_MODEL/smart_tv.glb"></a-asset-item>
+        <a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
+        <a-asset-item id="m-bulb" src="3D_MODEL/led_light_bulb.glb"></a-asset-item>
+
+        <!-- Renewables -->
+        <a-asset-item id="m-solar" src="3D_MODEL/Flat_Solar_Panel.glb"></a-asset-item>
+        <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
+      </a-assets>
+
+      <!-- Marker -->
       <a-marker preset="hiro" emitevents="true" id="marker">
-        <!-- Device (placeholder shape) -->
-        <a-box id="device" position="0 0.5 0" depth="0.6" height="0.6" width="0.6" color="#FFD54F"></a-box>
+        <!-- Main device model (we swap gltf-model id) -->
+        <a-entity id="device"
+                  gltf-model="#m-tv"
+                  position="0 0 0"
+                  rotation="0 0 0"
+                  scale="0.6 0.6 0.6"></a-entity>
 
-        <!-- Renewable (placeholder shape) -->
-        <a-entity id="renewableGroup" visible="false">
-          <!-- “Solar” panel placeholder -->
-          <a-plane id="solar" position="0.9 0.35 0" rotation="-90 0 0" width="0.6" height="0.4" color="#1565C0"></a-plane>
-
-          <!-- “Wind” turbine placeholder: stand + blades (we rotate blades) -->
-          <a-cylinder id="windStand" position="-0.9 0.5 0" radius="0.05" height="1.0" color="#B0BEC5"></a-cylinder>
-          <a-entity id="windBlades" position="-0.9 1.0 0">
-            <a-box position="0 0 0" depth="0.02" height="0.4" width="0.08" color="#ECEFF1"></a-box>
-            <a-box position="0 0 0" depth="0.02" height="0.08" width="0.4" color="#ECEFF1"></a-box>
-          </a-entity>
-
-          <!-- “Hydro” placeholder -->
-          <a-torus id="hydro" position="0 0.6 -0.9" radius="0.22" radius-tubular="0.06" color="#00BCD4" visible="false"></a-torus>
-        </a-entity>
+        <!-- Renewable model (we swap solar/wind) -->
+        <a-entity id="renewable"
+                  gltf-model="#m-solar"
+                  position="0.9 0 0"
+                  rotation="0 0 0"
+                  scale="0.6 0.6 0.6"
+                  visible="false"></a-entity>
       </a-marker>
 
       <a-entity camera></a-entity>
     </a-scene>
 
+    <!-- UI -->
     <div id="ui">
       <div class="pill" id="status">Status: Waiting for marker…</div>
 
       <div id="row">
-        <button onclick="setDevice('Lightbulb', 10)">Lightbulb</button>
-        <button onclick="setDevice('Fan', 50)">Fan</button>
-        <button onclick="setDevice('TV', 120)">TV</button>
+        <button onclick="pickDevice('TV')">TV</button>
+        <button onclick="pickDevice('Fan')">Fan</button>
+        <button onclick="pickDevice('Bulb')">Bulb</button>
 
-        <button class="secondary" onclick="setRenewable('Solar')">Solar</button>
-        <button class="secondary" onclick="setRenewable('Wind')">Wind</button>
-        <button class="secondary" onclick="setRenewable('Hydro')">Hydro</button>
+        <button class="secondary" onclick="pickRenewable('Solar')">Solar</button>
+        <button class="secondary" onclick="pickRenewable('Wind')">Wind</button>
       </div>
 
-      <div id="row" style="align-items:center;">
+      <div id="row">
         <span class="pill">Hours/day: <span id="hoursLabel">4</span></span>
         <input id="hours" type="range" min="1" max="24" value="4" oninput="updateHours(this.value)" />
-        <span class="pill">Energy: <span id="energyLabel">40</span> Wh/day</span>
+        <span class="pill">Energy: <span id="energyLabel">480</span> Wh/day</span>
+        <span class="pill" id="recommended">Recommended: Solar</span>
       </div>
 
       <div id="info">
-        1) Open this page on your phone. 2) Show a Hiro marker image big on your laptop screen. 3) Point phone camera at it.
+        1) Open this page on your phone. 2) Point camera at the Hiro marker. 3) Choose TV/Fan/Bulb, then Solar/Wind.
       </div>
     </div>
 
     <script>
-      let selectedDevice = 'Lightbulb';
-      let watts = 10;
+      // Demo watt values (you can change later)
+      const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
+
+      // Model asset ids in <a-assets>
+      const DEVICE_MODEL = { TV: '#m-tv', Fan: '#m-fan', Bulb: '#m-bulb' };
+      const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
+
+      let selectedDevice = 'TV';
+      let selectedRenew = 'Solar';
       let hoursPerDay = 4;
-      let renewableType = 'Solar';
+
+      const deviceEl = () => document.querySelector('#device');
+      const renewEl  = () => document.querySelector('#renewable');
 
       function whPerDay(w, h) { return Math.round(w * h); }
 
-      function setDevice(name, w) {
+      function updateUI() {
+        const watts = DEVICE_WATTS[selectedDevice];
+        const wh = whPerDay(watts, hoursPerDay);
+        document.querySelector('#energyLabel').textContent = String(wh);
+        document.querySelector('#hoursLabel').textContent = String(hoursPerDay);
+
+        // Simple "recommended" mapping
+        const rec = (selectedDevice === 'Bulb') ? 'Solar' : (selectedDevice === 'Fan') ? 'Wind' : 'Try both';
+        document.querySelector('#recommended').textContent = `Recommended: ${rec}`;
+
+        document.querySelector('#info').textContent =
+          `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Showing: ${selectedRenew}.`;
+      }
+
+      // Workaround: removeAttribute then setAttribute for swapping models
+      // (Some A-Frame versions have issues updating gltf-model directly.)
+      function swapModel(el, assetId) {
+        el.removeAttribute('gltf-model');
+        el.setAttribute('gltf-model', assetId);
+      }
+
+      function pickDevice(name) {
         selectedDevice = name;
-        watts = w;
-        applyDeviceLook();
+        swapModel(deviceEl(), DEVICE_MODEL[name]);
         updateUI();
       }
 
-      function setRenewable(type) {
-        renewableType = type;
-        applyRenewableLook();
+      function pickRenewable(type) {
+        selectedRenew = type;
+        const r = renewEl();
+        r.setAttribute('visible', true);
+        swapModel(r, RENEW_MODEL[type]);
+
+        // Wind spins, Solar no spin
+        r.removeAttribute('animation');
+        if (type === 'Wind') {
+          r.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1200; easing: linear;');
+        }
+
         updateUI();
       }
 
       function updateHours(v) {
         hoursPerDay = Number(v);
-        document.querySelector('#hoursLabel').textContent = String(hoursPerDay);
         updateUI();
       }
 
-      function updateUI() {
-        const wh = whPerDay(watts, hoursPerDay);
-        document.querySelector('#energyLabel').textContent = String(wh);
-        document.querySelector('#info').textContent =
-          `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Source: ${renewableType}.`;
-      }
-
-      function applyDeviceLook() {
-        const device = document.querySelector('#device');
-        if (selectedDevice === 'Lightbulb') {
-          device.setAttribute('geometry', 'primitive: sphere; radius: 0.35');
-          device.setAttribute('color', '#FFD54F');
-          device.setAttribute('position', '0 0.5 0');
-        } else if (selectedDevice === 'Fan') {
-          device.setAttribute('geometry', 'primitive: cylinder; radius: 0.25; height: 0.7');
-          device.setAttribute('color', '#B0BEC5');
-          device.setAttribute('position', '0 0.5 0');
-        } else {
-          device.setAttribute('geometry', 'primitive: box; width: 0.7; height: 0.45; depth: 0.2');
-          device.setAttribute('color', '#90CAF9');
-          device.setAttribute('position', '0 0.5 0');
-        }
-      }
-
-      function applyRenewableLook() {
-        const group = document.querySelector('#renewableGroup');
-        const solar = document.querySelector('#solar');
-        const windBlades = document.querySelector('#windBlades');
-        const hydro = document.querySelector('#hydro');
-
-        group.setAttribute('visible', true);
-
-        // Reset visibility + animations
-        solar.setAttribute('visible', false);
-        hydro.setAttribute('visible', false);
-        windBlades.removeAttribute('animation');
-
-        if (renewableType === 'Solar') {
-          solar.setAttribute('visible', true);
-        } else if (renewableType === 'Wind') {
-          windBlades.setAttribute('animation', 'property: rotation; to: 0 0 360; loop: true; dur: 700; easing: linear;');
-        } else {
-          hydro.setAttribute('visible', true);
-          hydro.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1500; easing: linear;');
-        }
-      }
-
-      // Marker found/lost messages
+      // Marker status
       const marker = document.querySelector('#marker');
       const status = document.querySelector('#status');
 
       marker.addEventListener('markerFound', () => {
         status.textContent = 'Status: Marker found ✅';
-        // Make sure something is visible when found
-        applyDeviceLook();
-        applyRenewableLook();
-        updateUI();
+        // Ensure UI is consistent when first found
+        pickDevice(selectedDevice);
+        pickRenewable(selectedRenew);
       });
 
       marker.addEventListener('markerLost', () => {
@@ -192,7 +188,6 @@
       });
 
       // Initial UI
-      applyDeviceLook();
       updateUI();
     </script>
   </body>
