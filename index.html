@@ -1,8 +1,76 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>AR Clean Energy Explorer</title></head>
-<body>
-  <h1>AR Clean Energy Explorer</h1>
-  <p>If you can read this, your index.html is working.</p>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR Clean Energy Explorer</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- AR.js for A-Frame -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+
+    <style>
+      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+      #ui {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.65); color: white;
+        padding: 12px; display: flex; gap: 10px; flex-wrap: wrap;
+      }
+      button {
+        padding: 10px 12px; border: 0; border-radius: 10px;
+        background: white; color: black; font-weight: 600;
+      }
+      #info { width: 100%; margin-top: 6px; opacity: 0.9; }
+    </style>
+  </head>
+
+  <body>
+    <!-- AR Scene -->
+    <a-scene embedded arjs>
+      <!-- Marker (fastest): Hiro preset -->
+      <a-marker preset="hiro">
+        <!-- Device model (placeholder box for now) -->
+        <a-box id="device" position="0 0.5 0" color="#FFD54F"></a-box>
+
+        <!-- Renewable model (placeholder cylinder for now) -->
+        <a-cylinder id="renewable" position="0.8 0.5 0" radius="0.2" height="1" color="#4FC3F7" visible="false"></a-cylinder>
+      </a-marker>
+
+      <!-- Camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <!-- UI -->
+    <div id="ui">
+      <button onclick="setDevice('Lightbulb', 10)">Lightbulb</button>
+      <button onclick="setDevice('Fan', 50)">Fan</button>
+      <button onclick="setDevice('TV', 120)">TV</button>
+
+      <button onclick="setRenewable('Solar')">Solar</button>
+      <button onclick="setRenewable('Wind')">Wind</button>
+      <button onclick="setRenewable('Hydro')">Hydro</button>
+
+      <div id="info">Pick a device, then point camera at a Hiro marker.</div>
+    </div>
+
+    <script>
+      let selectedDevice = 'Lightbulb';
+      let watts = 10;
+
+      function setDevice(name, w) {
+        selectedDevice = name;
+        watts = w;
+        document.querySelector('#info').textContent =
+          `${selectedDevice}: ${watts}W (example). Now choose Solar/Wind/Hydro.`;
+      }
+
+      function setRenewable(type) {
+        const renewable = document.querySelector('#renewable');
+        renewable.setAttribute('visible', true);
+        document.querySelector('#info').textContent =
+          `${selectedDevice} (${watts}W) powered by ${type} (demo).`;
+      }
+    </script>
+  </body>
 </html>
