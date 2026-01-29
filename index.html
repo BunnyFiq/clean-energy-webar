@@ -55,7 +55,8 @@
         <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
       </a-assets>
 
-      <a-marker preset="hiro" emitevents="true" id="marker">
+     <a-marker preset="hiro" emitevents="true" id="marker"
+          smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
         <!-- Device LEFT -->
         <a-entity id="device"
                   gltf-model="#m-tv"
@@ -204,3 +205,4 @@
     </script>
   </body>
 </html>
+
