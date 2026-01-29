@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Renewable Demo</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1220; }
+    #bar{
+      position:fixed; left:0; right:0; top:0;
+      padding:12px; color:white; background:rgba(0,0,0,.55);
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      z-index: 9999;
+    }
+    button{ padding:10px 12px; border:0; border-radius:12px; font-weight:700; cursor:pointer; }
+    #label{ opacity:.95; }
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <button onclick="goBack()">Back</button>
+    <div id="label">Demo</div>
+    <button onclick="play()">Play</button>
+  </div>
+
+  <a-scene>
+    <a-assets>
+      <!-- iPhone-friendly attributes -->
+      <video id="demoVid" playsinline webkit-playsinline muted preload="auto" crossorigin="anonymous"></video>
+    </a-assets>
+
+    <!-- Video “screen” -->
+    <a-video src="#demoVid"
+             position="0 1.6 -2.2"
+             width="2.6" height="1.46"></a-video>
+
+    <a-entity camera position="0 1.6 0"></a-entity>
+  </a-scene>
+
+  <script>
+    function qp(name){ return new URLSearchParams(location.search).get(name) || ''; }
+
+    const device = (qp('device') || 'tv').toLowerCase();       // tv / fan / bulb
+    const renew  = (qp('renew')  || 'solar').toLowerCase();    // solar / turbine
+    document.querySelector('#label').textContent = `Demo: ${device.toUpperCase()} + ${renew.toUpperCase()}`;
+
+    const map = {
+      tv:   { solar: 'tv_solar.mp4',   turbine: 'tv_turbine.mp4' },
+      fan:  { solar: 'fan_solar.mp4',  turbine: 'fan_turbine.mp4' },
+      bulb: { solar: 'bulb_solar.mp4', turbine: 'bulb_turbine.mp4' }
+    };
+
+    const file = (map[device] && map[device][renew]) ? map[device][renew] : 'tv_solar.mp4';
+
+    const vid = document.querySelector('#demoVid');
+    vid.src = file; // because your mp4 files are in repo root
+
+    function play(){
+      // iOS requires user gesture; this button is the gesture.
+      vid.play();
+    }
+
+    function goBack(){
+      location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
