@@ -20,22 +20,9 @@
         flex-wrap: wrap;
         align-items: center;
       }
-      .pill {
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.12);
-        font-size: 12px;
-      }
+      .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
       #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
-      button {
-        padding: 10px 12px;
-        border: 0;
-        border-radius: 12px;
-        background: #ffffff;
-        color: #0f172a;
-        font-weight: 800;
-        cursor: pointer;
-      }
+      button { padding: 10px 12px; border: 0; border-radius: 12px; background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer; }
       button.secondary { background: #38bdf8; color: #06283d; }
       input[type="range"] { width: 220px; }
       #info { width: 100%; margin-top: 6px; font-size: 14px; opacity: 0.95; line-height: 1.3; }
@@ -88,29 +75,26 @@
         <span class="pill" id="recommended">Recommended: Solar</span>
       </div>
 
-      <div id="info">Tip: If GitHub Pages shows old version, open same link with ?v=2, ?v=3…</div>
+      <div id="info">Open DevTools Console if model not visible.</div>
     </div>
 
     <script>
-      // Rotation is "x y z" in degrees in A-Frame. [web:514]
-      // "Standing straight" here means: not lying flat (blades not facing the ground).
-      // If any model is still wrong, flip +/-90 on X first.
+      // rotation is "x y z" in degrees. [web:514]
       const MODEL_CONFIG = {
-        // Devices (left side)
-        TV:   { pos: '-0.25 0.10 0', scale: '2.00 2.00 2.00', rot: '0 0 0' },
-        Fan:  { pos: '-0.25 0.10 0', scale: '0.50 0.50 0.50', rot: '-90 0 0' },
-        Bulb: { pos: '-0.25 0.10 0', scale: '3.00 3.00 3.00', rot: '0 0 0' },
+        // Make TV obviously visible:
+        TV:   { pos: '-0.25 0.25 0', scale: '4 4 4', rot: '0 0 0' },
 
-        // Renewables (right side)
-        // Solar panel: if you WANT it flat on the marker, change rot to "0 0 0".
-        Solar:{ pos: '0.25 0.10 0',  scale: '1.10 1.10 1.10',  rot: '-90 0 0' },
+        // "Standing straight" defaults (if any still wrong, flip X between 90 and -90):
+        Fan:  { pos: '-0.25 0.20 0', scale: '0.8 0.8 0.8', rot: '-90 0 0' },
+        Bulb: { pos: '-0.25 0.20 0', scale: '3 3 3', rot: '0 0 0' },
 
-        // Wind turbine upright
-        Wind: { pos: '0.25 0.10 0',  scale: '1.10 1.10 1.10',  rot: '-90 0 0' }
+        // Solar panel: if you want it vertical, keep -90. If you want it flat on marker, use 0 0 0.
+        Solar:{ pos: '0.25 0.20 0',  scale: '1.2 1.2 1.2',  rot: '-90 180 0' },
+
+        Wind: { pos: '0.25 0.20 0',  scale: '1.2 1.2 1.2',  rot: '-90 0 0' }
       };
 
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
-
       const DEVICE_MODEL = { TV: '#m-tv', Fan: '#m-fan', Bulb: '#m-bulb' };
       const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
 
@@ -150,12 +134,23 @@
         el.setAttribute('rotation', cfg.rot);
       }
 
+      // Debug: tell us if model actually loads or fails. [web:581]
+      function attachModelDebug(el, label) {
+        el.addEventListener('model-loaded', () => console.log(`[OK] ${label} model-loaded`));
+        el.addEventListener('model-error', (e) => console.error(`[FAIL] ${label} model-error`, e));
+      }
+
+      attachModelDebug(deviceEl(), 'device');
+      attachModelDebug(renewEl(), 'renewable');
+
       function pickDevice(name) {
         selectedDevice = name;
         const d = deviceEl();
+
         swapModel(d, DEVICE_MODEL[name]);
         applyTransform(d, MODEL_CONFIG[name]);
         d.setAttribute('visible', true);
+
         updateUI();
       }
 
@@ -166,19 +161,14 @@
         const child = renewEl();
 
         pivot.setAttribute('visible', true);
-
-        // Transform for the renewable is always on the pivot
         applyTransform(pivot, MODEL_CONFIG[type]);
 
-        // Child stays at origin and just holds the glb
         child.setAttribute('position', '0 0 0');
         child.setAttribute('rotation', '0 0 0');
         child.setAttribute('scale', '1 1 1');
         child.setAttribute('visible', true);
 
         swapModel(child, RENEW_MODEL[type]);
-
-        // No spinning for now
         child.removeAttribute('animation');
 
         updateUI();
@@ -208,7 +198,7 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
-      // initial (before marker found)
+      // Start state (so when marker appears, it already has transforms)
       updateUI();
       applyTransform(deviceEl(), MODEL_CONFIG[selectedDevice]);
     </script>
