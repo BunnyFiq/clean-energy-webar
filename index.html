@@ -57,20 +57,9 @@
 
       <a-marker preset="hiro" emitevents="true" id="marker"
                 smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-        <!-- Device LEFT (closer to center to avoid disappearing) -->
-        <a-entity id="device"
-                  gltf-model="#m-tv"
-                  position="-0.25 0.05 0"
-                  rotation="0 0 0"
-                  scale="2.00 2.00 2.00"></a-entity>
-
-        <!-- Renewable RIGHT -->
-        <a-entity id="renewable"
-                  gltf-model="#m-solar"
-                  position="0.25 0.05 0"
-                  rotation="0 0 0"
-                  scale="1.10 1.10 1.10"
-                  visible="false"></a-entity>
+        <!-- Entities are generic; we swap models and then apply per-model size+position -->
+        <a-entity id="device" gltf-model="#m-tv"></a-entity>
+        <a-entity id="renewable" gltf-model="#m-solar" visible="false"></a-entity>
       </a-marker>
 
       <a-entity camera></a-entity>
@@ -101,7 +90,23 @@
     </div>
 
     <script>
+      // ====== CHANGE THESE LATER (ALL SIZES + POSITIONS HERE) ======
+      // Format: { pos: 'x y z', scale: 'x y z', rot: 'x y z' }
+      const MODEL_CONFIG = {
+        TV:   { pos: '-0.25 0.05 0', scale: '2.00 2.00 2.00', rot: '0 0 0' },
+        Fan:  { pos: '-0.25 0.05 0', scale: '0.90 0.90 0.90', rot: '0 0 0' },
+        Bulb: { pos: '-0.25 0.05 0', scale: '3.00 3.00 3.00', rot: '0 0 0' },
+
+        Solar:{ pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 0' },
+        Wind: { pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 0' }
+      };
+
+      // If you want more separation: change TV/Fan/Bulb pos x to -0.35 and Solar/Wind pos x to +0.35.
+      // If models go off-screen: change both x to -0.15 and +0.15.
+      // ============================================================
+
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
+
       const DEVICE_MODEL = { TV: '#m-tv', Fan: '#m-fan', Bulb: '#m-bulb' };
       const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
 
@@ -134,23 +139,16 @@
         el.setAttribute('gltf-model', assetId);
       }
 
-      function setDeviceScale(name) {
-        const d = deviceEl();
-
-        // Explicit sizes for each device:
-        if (name === 'Bulb') d.setAttribute('scale', '3.00 3.00 3.00');
-        if (name === 'TV')   d.setAttribute('scale', '2.00 2.00 2.00');
-        if (name === 'Fan')  d.setAttribute('scale', '0.90 0.90 0.90');
+      function applyTransform(el, cfg) {
+        el.setAttribute('position', cfg.pos);
+        el.setAttribute('scale', cfg.scale);
+        el.setAttribute('rotation', cfg.rot);
       }
 
       function pickDevice(name) {
         selectedDevice = name;
-
-        // Keep device on left, near center
-        deviceEl().setAttribute('position', '-0.25 0.05 0');
-
         swapModel(deviceEl(), DEVICE_MODEL[name]);
-        setDeviceScale(name);
+        applyTransform(deviceEl(), MODEL_CONFIG[name]);
         updateUI();
       }
 
@@ -160,11 +158,10 @@
         const r = renewEl();
         r.setAttribute('visible', true);
 
-        // Keep renewable on right, near center
-        r.setAttribute('position', '0.25 0.05 0');
-
         swapModel(r, RENEW_MODEL[type]);
+        applyTransform(r, MODEL_CONFIG[type]);
 
+        // Animation only for wind
         r.removeAttribute('animation');
         if (type === 'Wind') {
           r.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1200; easing: linear;');
@@ -197,8 +194,9 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
+      // Initial state (before marker found)
       updateUI();
-      setDeviceScale(selectedDevice);
+      applyTransform(deviceEl(), MODEL_CONFIG[selectedDevice]);
     </script>
   </body>
 </html>
