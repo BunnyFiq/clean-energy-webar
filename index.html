@@ -55,19 +55,19 @@
         <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
       </a-assets>
 
-     <a-marker preset="hiro" emitevents="true" id="marker"
-          smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-        <!-- Device LEFT -->
+      <a-marker preset="hiro" emitevents="true" id="marker"
+                smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+        <!-- Device LEFT (closer to center to avoid disappearing) -->
         <a-entity id="device"
                   gltf-model="#m-tv"
-                  position="-0.45 0 0"
+                  position="-0.25 0.05 0"
                   rotation="0 0 0"
                   scale="2.00 2.00 2.00"></a-entity>
 
         <!-- Renewable RIGHT -->
         <a-entity id="renewable"
                   gltf-model="#m-solar"
-                  position="0.45 0 0"
+                  position="0.25 0.05 0"
                   rotation="0 0 0"
                   scale="1.10 1.10 1.10"
                   visible="false"></a-entity>
@@ -97,9 +97,7 @@
         <span class="pill" id="recommended">Recommended: Solar</span>
       </div>
 
-      <div id="info">
-        Step 1: Choose TV/Fan/Bulb. Step 2: Choose Solar/Wind. Step 3: Tap Demo.
-      </div>
+      <div id="info">Step 1: Choose device. Step 2: Choose Solar/Wind. Step 3: Tap Demo.</div>
     </div>
 
     <script>
@@ -139,17 +137,17 @@
       function setDeviceScale(name) {
         const d = deviceEl();
 
-        // You can adjust these numbers if still too small/big.
-        if (name === 'Bulb') d.setAttribute('scale', '3.00 3.00 3.00');     // bigger bulb
-        else if (name === 'TV') d.setAttribute('scale', '2.00 2.00 2.00');  // bigger TV
-        else d.setAttribute('scale', '0.90 0.90 0.90');                     // fan
+        // Explicit sizes for each device:
+        if (name === 'Bulb') d.setAttribute('scale', '3.00 3.00 3.00');
+        if (name === 'TV')   d.setAttribute('scale', '2.00 2.00 2.00');
+        if (name === 'Fan')  d.setAttribute('scale', '0.90 0.90 0.90');
       }
 
       function pickDevice(name) {
         selectedDevice = name;
 
-        // Keep device on LEFT always
-        deviceEl().setAttribute('position', '-0.45 0 0');
+        // Keep device on left, near center
+        deviceEl().setAttribute('position', '-0.25 0.05 0');
 
         swapModel(deviceEl(), DEVICE_MODEL[name]);
         setDeviceScale(name);
@@ -162,12 +160,11 @@
         const r = renewEl();
         r.setAttribute('visible', true);
 
-        // Keep renewable on RIGHT always
-        r.setAttribute('position', '0.45 0 0');
+        // Keep renewable on right, near center
+        r.setAttribute('position', '0.25 0.05 0');
 
         swapModel(r, RENEW_MODEL[type]);
 
-        // Wind spins; Solar does not
         r.removeAttribute('animation');
         if (type === 'Wind') {
           r.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1200; easing: linear;');
@@ -205,4 +202,3 @@
     </script>
   </body>
 </html>
-
