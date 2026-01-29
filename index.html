@@ -45,12 +45,10 @@
   <body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
       <a-assets>
-        <!-- Devices -->
         <a-asset-item id="m-tv"   src="3D_MODEL/smart_tv.glb"></a-asset-item>
         <a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
         <a-asset-item id="m-bulb" src="3D_MODEL/led_light_bulb.glb"></a-asset-item>
 
-        <!-- Renewables -->
         <a-asset-item id="m-solar" src="3D_MODEL/Flat_Solar_Panel.glb"></a-asset-item>
         <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
       </a-assets>
@@ -58,12 +56,10 @@
       <a-marker preset="hiro" emitevents="true" id="marker"
                 smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
 
-        <!-- Device -->
         <a-entity id="device" gltf-model="#m-tv"></a-entity>
 
-        <!-- Renewable wrapper (pivot) so later we can spin only blades, etc. -->
         <a-entity id="renewablePivot" visible="false">
-          <a-entity id="renewable" gltf-model="#m-solar"></a-entity>
+          <a-entity id="renewable"></a-entity>
         </a-entity>
 
       </a-marker>
@@ -92,21 +88,26 @@
         <span class="pill" id="recommended">Recommended: Solar</span>
       </div>
 
-      <div id="info">Step 1: Choose device. Step 2: Choose Solar/Wind. Step 3: Tap Demo.</div>
+      <div id="info">Tip: If GitHub Pages shows old version, open same link with ?v=2, ?v=3…</div>
     </div>
 
     <script>
-      // ====== EDIT THESE LATER (ALL SIZES + POSITIONS + ROTATIONS HERE) ======
-      // rotation is "x y z" in DEGREES in A-Frame. [web:514]
+      // Rotation is "x y z" in degrees in A-Frame. [web:514]
+      // "Standing straight" here means: not lying flat (blades not facing the ground).
+      // If any model is still wrong, flip +/-90 on X first.
       const MODEL_CONFIG = {
-        TV:   { pos: '-0.25 0.05 0', scale: '1.00 1.00 1.00', rot: '0 0 0' },
-        Fan:  { pos: '-0.25 0.05 0', scale: '0.50 0.50 0.50', rot: '-90 0 0' },   // flip to -90 0 0 if needed
-        Bulb: { pos: '-0.25 0.05 0', scale: '3.00 3.00 3.00', rot: '0 0 0' },
+        // Devices (left side)
+        TV:   { pos: '-0.25 0.10 0', scale: '2.00 2.00 2.00', rot: '0 0 0' },
+        Fan:  { pos: '-0.25 0.10 0', scale: '0.50 0.50 0.50', rot: '-90 0 0' },
+        Bulb: { pos: '-0.25 0.10 0', scale: '3.00 3.00 3.00', rot: '0 0 0' },
 
-        Solar:{ pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '-180 180 0' },
-        Wind: { pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 0' }   // flip to -90 0 0 if needed
+        // Renewables (right side)
+        // Solar panel: if you WANT it flat on the marker, change rot to "0 0 0".
+        Solar:{ pos: '0.25 0.10 0',  scale: '1.10 1.10 1.10',  rot: '-90 0 0' },
+
+        // Wind turbine upright
+        Wind: { pos: '0.25 0.10 0',  scale: '1.10 1.10 1.10',  rot: '-90 0 0' }
       };
-      // =====================================================================
 
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
 
@@ -154,6 +155,7 @@
         const d = deviceEl();
         swapModel(d, DEVICE_MODEL[name]);
         applyTransform(d, MODEL_CONFIG[name]);
+        d.setAttribute('visible', true);
         updateUI();
       }
 
@@ -165,17 +167,18 @@
 
         pivot.setAttribute('visible', true);
 
-        // Apply transform to the pivot (position/scale/rotation for each renewable)
+        // Transform for the renewable is always on the pivot
         applyTransform(pivot, MODEL_CONFIG[type]);
 
-        // Child stays at pivot origin
+        // Child stays at origin and just holds the glb
         child.setAttribute('position', '0 0 0');
         child.setAttribute('rotation', '0 0 0');
         child.setAttribute('scale', '1 1 1');
+        child.setAttribute('visible', true);
 
         swapModel(child, RENEW_MODEL[type]);
 
-        // Ignore turbine blade spinning issue for now: NO animation applied here
+        // No spinning for now
         child.removeAttribute('animation');
 
         updateUI();
@@ -187,7 +190,7 @@
       }
 
       function goDemo() {
-        const d = selectedDevice.toLowerCase(); // tv/fan/bulb
+        const d = selectedDevice.toLowerCase();
         const r = (selectedRenew.toLowerCase() === 'wind') ? 'turbine' : 'solar';
         location.href = `demo.html?device=${encodeURIComponent(d)}&renew=${encodeURIComponent(r)}`;
       }
@@ -205,12 +208,9 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
-      // Initial (before marker found)
+      // initial (before marker found)
       updateUI();
       applyTransform(deviceEl(), MODEL_CONFIG[selectedDevice]);
     </script>
   </body>
 </html>
-
-
-
