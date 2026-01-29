@@ -39,7 +39,7 @@
         border-radius: 12px;
         background: #ffffff;
         color: #0f172a;
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
       }
       button.secondary { background: #38bdf8; color: #06283d; }
@@ -64,19 +64,19 @@
 
       <!-- Marker -->
       <a-marker preset="hiro" emitevents="true" id="marker">
-        <!-- Main device model (we swap gltf-model id) -->
+        <!-- Device in the middle -->
         <a-entity id="device"
                   gltf-model="#m-tv"
                   position="0 0 0"
                   rotation="0 0 0"
-                  scale="0.6 0.6 0.6"></a-entity>
+                  scale="0.85 0.85 0.85"></a-entity>
 
-        <!-- Renewable model (we swap solar/wind) -->
+        <!-- Renewable also centered, slightly behind on Z -->
         <a-entity id="renewable"
                   gltf-model="#m-solar"
-                  position="0.9 0 0"
+                  position="0 0 -0.6"
                   rotation="0 0 0"
-                  scale="0.6 0.6 0.6"
+                  scale="0.75 0.75 0.75"
                   visible="false"></a-entity>
       </a-marker>
 
@@ -94,6 +94,8 @@
 
         <button class="secondary" onclick="pickRenewable('Solar')">Solar</button>
         <button class="secondary" onclick="pickRenewable('Wind')">Wind</button>
+
+        <button class="secondary" onclick="goDemo()">Demo</button>
       </div>
 
       <div id="row">
@@ -104,15 +106,15 @@
       </div>
 
       <div id="info">
-        1) Open this page on your phone. 2) Point camera at the Hiro marker. 3) Choose TV/Fan/Bulb, then Solar/Wind.
+        Step 1: Choose TV/Fan/Bulb. Step 2: Choose Solar/Wind. Step 3: Tap Demo.
       </div>
     </div>
 
     <script>
-      // Demo watt values (you can change later)
+      // Demo watt values
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
 
-      // Model asset ids in <a-assets>
+      // Model ids in <a-assets>
       const DEVICE_MODEL = { TV: '#m-tv', Fan: '#m-fan', Bulb: '#m-bulb' };
       const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
 
@@ -131,34 +133,48 @@
         document.querySelector('#energyLabel').textContent = String(wh);
         document.querySelector('#hoursLabel').textContent = String(hoursPerDay);
 
-        // Simple "recommended" mapping
-        const rec = (selectedDevice === 'Bulb') ? 'Solar' : (selectedDevice === 'Fan') ? 'Wind' : 'Try both';
+        const rec = (selectedDevice === 'Bulb') ? 'Solar'
+                  : (selectedDevice === 'Fan') ? 'Wind'
+                  : 'Try both';
         document.querySelector('#recommended').textContent = `Recommended: ${rec}`;
 
         document.querySelector('#info').textContent =
-          `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Showing: ${selectedRenew}.`;
+          `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Selected: ${selectedRenew}.`;
       }
 
-      // Workaround: removeAttribute then setAttribute for swapping models
-      // (Some A-Frame versions have issues updating gltf-model directly.)
+      // Reliable swap
       function swapModel(el, assetId) {
         el.removeAttribute('gltf-model');
         el.setAttribute('gltf-model', assetId);
       }
 
+      function setDeviceScale(name) {
+        const d = deviceEl();
+
+        // You can adjust these numbers if still too small/big.
+        if (name === 'Bulb') d.setAttribute('scale', '1.25 1.25 1.25');     // bigger bulb
+        else if (name === 'TV') d.setAttribute('scale', '1.00 1.00 1.00');  // bigger TV
+        else d.setAttribute('scale', '0.90 0.90 0.90');                     // fan
+      }
+
       function pickDevice(name) {
         selectedDevice = name;
         swapModel(deviceEl(), DEVICE_MODEL[name]);
+        setDeviceScale(name);
         updateUI();
       }
 
       function pickRenewable(type) {
         selectedRenew = type;
+
         const r = renewEl();
         r.setAttribute('visible', true);
         swapModel(r, RENEW_MODEL[type]);
 
-        // Wind spins, Solar no spin
+        // Keep in the middle, slightly behind device
+        r.setAttribute('position', '0 0 -0.6');
+
+        // Wind spins; Solar does not
         r.removeAttribute('animation');
         if (type === 'Wind') {
           r.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1200; easing: linear;');
@@ -172,13 +188,20 @@
         updateUI();
       }
 
+      function goDemo() {
+        // Your videos use: *_solar.mp4 and *_turbine.mp4
+        const d = selectedDevice.toLowerCase(); // tv/fan/bulb
+        const r = (selectedRenew.toLowerCase() === 'wind') ? 'turbine' : 'solar';
+        location.href = `demo.html?device=${encodeURIComponent(d)}&renew=${encodeURIComponent(r)}`;
+      }
+
       // Marker status
       const marker = document.querySelector('#marker');
       const status = document.querySelector('#status');
 
       marker.addEventListener('markerFound', () => {
         status.textContent = 'Status: Marker found ✅';
-        // Ensure UI is consistent when first found
+        // Ensure the scene is correct as soon as marker is found
         pickDevice(selectedDevice);
         pickRenewable(selectedRenew);
       });
@@ -187,8 +210,9 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
-      // Initial UI
+      // Initial UI (before marker found)
       updateUI();
+      setDeviceScale(selectedDevice);
     </script>
   </body>
 </html>
