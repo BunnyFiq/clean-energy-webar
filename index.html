@@ -57,9 +57,15 @@
 
       <a-marker preset="hiro" emitevents="true" id="marker"
                 smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-        <!-- Entities are generic; we swap models and then apply per-model size+position -->
+
+        <!-- Device -->
         <a-entity id="device" gltf-model="#m-tv"></a-entity>
-        <a-entity id="renewable" gltf-model="#m-solar" visible="false"></a-entity>
+
+        <!-- Renewable wrapper (pivot) so later we can spin only blades, etc. -->
+        <a-entity id="renewablePivot" visible="false">
+          <a-entity id="renewable" gltf-model="#m-solar"></a-entity>
+        </a-entity>
+
       </a-marker>
 
       <a-entity camera></a-entity>
@@ -90,20 +96,17 @@
     </div>
 
     <script>
-      // ====== CHANGE THESE LATER (ALL SIZES + POSITIONS HERE) ======
-      // Format: { pos: 'x y z', scale: 'x y z', rot: 'x y z' }
+      // ====== EDIT THESE LATER (ALL SIZES + POSITIONS + ROTATIONS HERE) ======
+      // rotation is "x y z" in DEGREES in A-Frame. [web:514]
       const MODEL_CONFIG = {
         TV:   { pos: '-0.25 0.05 0', scale: '2.00 2.00 2.00', rot: '0 0 0' },
-        Fan:  { pos: '-0.25 0.05 0', scale: '0.10 0.10 0.10', rot: '0 0 180' },
-        Bulb: { pos: '-0.25 0.05 0', scale: '5.00 5.00 5.00', rot: '0 0 0' },
+        Fan:  { pos: '-0.25 0.05 0', scale: '0.90 0.90 0.90', rot: '90 0 0' },   // flip to -90 0 0 if needed
+        Bulb: { pos: '-0.25 0.05 0', scale: '3.00 3.00 3.00', rot: '0 0 0' },
 
-        Solar:{ pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 180' },
-        Wind: { pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 0' }
+        Solar:{ pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '0 0 0' },
+        Wind: { pos: '0.25 0.05 0',  scale: '1.10 1.10 1.10',  rot: '90 0 0' }   // flip to -90 0 0 if needed
       };
-
-      // If you want more separation: change TV/Fan/Bulb pos x to -0.35 and Solar/Wind pos x to +0.35.
-      // If models go off-screen: change both x to -0.15 and +0.15.
-      // ============================================================
+      // =====================================================================
 
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
 
@@ -115,6 +118,7 @@
       let hoursPerDay = 4;
 
       const deviceEl = () => document.querySelector('#device');
+      const renewPivotEl = () => document.querySelector('#renewablePivot');
       const renewEl  = () => document.querySelector('#renewable');
 
       function whPerDay(w, h) { return Math.round(w * h); }
@@ -147,25 +151,32 @@
 
       function pickDevice(name) {
         selectedDevice = name;
-        swapModel(deviceEl(), DEVICE_MODEL[name]);
-        applyTransform(deviceEl(), MODEL_CONFIG[name]);
+        const d = deviceEl();
+        swapModel(d, DEVICE_MODEL[name]);
+        applyTransform(d, MODEL_CONFIG[name]);
         updateUI();
       }
 
       function pickRenewable(type) {
         selectedRenew = type;
 
-        const r = renewEl();
-        r.setAttribute('visible', true);
+        const pivot = renewPivotEl();
+        const child = renewEl();
 
-        swapModel(r, RENEW_MODEL[type]);
-        applyTransform(r, MODEL_CONFIG[type]);
+        pivot.setAttribute('visible', true);
 
-        // Animation only for wind
-        r.removeAttribute('animation');
-        if (type === 'Wind') {
-          r.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 1200; easing: linear;');
-        }
+        // Apply transform to the pivot (position/scale/rotation for each renewable)
+        applyTransform(pivot, MODEL_CONFIG[type]);
+
+        // Child stays at pivot origin
+        child.setAttribute('position', '0 0 0');
+        child.setAttribute('rotation', '0 0 0');
+        child.setAttribute('scale', '1 1 1');
+
+        swapModel(child, RENEW_MODEL[type]);
+
+        // Ignore turbine blade spinning issue for now: NO animation applied here
+        child.removeAttribute('animation');
 
         updateUI();
       }
@@ -194,12 +205,9 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
-      // Initial state (before marker found)
+      // Initial (before marker found)
       updateUI();
       applyTransform(deviceEl(), MODEL_CONFIG[selectedDevice]);
     </script>
   </body>
 </html>
-
-
-
