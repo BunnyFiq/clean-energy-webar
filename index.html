@@ -75,22 +75,18 @@
         <span class="pill" id="recommended">Recommended: Solar</span>
       </div>
 
-      <div id="info">Open DevTools Console if model not visible.</div>
+      <div id="info">After commit, open link with ?v=5 to see changes.</div>
     </div>
 
     <script>
-      // rotation is "x y z" in degrees. [web:514]
       const MODEL_CONFIG = {
-        // Make TV obviously visible:
-        TV: { pos: '0 1.0 0', scale: '10 10 10', rot: '0 0 0' },
+        // TV GLB is microscopic; needs massive scale:
+        TV:   { pos: '-0.25 0.30 0', scale: '100 100 100', rot: '0 0 0' },
 
-        // "Standing straight" defaults (if any still wrong, flip X between 90 and -90):
         Fan:  { pos: '-0.25 0.20 0', scale: '0.1 0.1 0.1', rot: '-90 0 0' },
         Bulb: { pos: '-0.25 0.20 0', scale: '5 5 5', rot: '0 0 0' },
 
-        // Solar panel: if you want it vertical, keep -90. If you want it flat on marker, use 0 0 0.
         Solar:{ pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' },
-
         Wind: { pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' }
       };
 
@@ -134,7 +130,6 @@
         el.setAttribute('rotation', cfg.rot);
       }
 
-      // Debug: tell us if model actually loads or fails. [web:581]
       function attachModelDebug(el, label) {
         el.addEventListener('model-loaded', () => console.log(`[OK] ${label} model-loaded`));
         el.addEventListener('model-error', (e) => console.error(`[FAIL] ${label} model-error`, e));
@@ -198,14 +193,8 @@
         status.textContent = 'Status: Waiting for marker…';
       });
 
-      // Start state (so when marker appears, it already has transforms)
       updateUI();
       applyTransform(deviceEl(), MODEL_CONFIG[selectedDevice]);
     </script>
   </body>
 </html>
-
-
-
-
-
