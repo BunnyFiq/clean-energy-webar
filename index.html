@@ -10,6 +10,7 @@
 
     <style>
       body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      
       #ui {
         position: fixed; left: 0; right: 0; bottom: 0;
         background: rgba(15, 23, 42, 0.78);
@@ -20,22 +21,116 @@
         flex-wrap: wrap;
         align-items: center;
       }
+      
       .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
       #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
-      button { padding: 10px 12px; border: 0; border-radius: 12px; background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer; }
+      
+      button { 
+        padding: 10px 12px; border: 0; border-radius: 12px;
+        background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      button:hover { transform: scale(1.05); }
       button.secondary { background: #38bdf8; color: #06283d; }
+      
+      /* Premium Demo Button (hidden by default) */
+      #demoBtn {
+        display: none; /* Hidden until both selections made */
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%) scale(0);
+        padding: 18px 40px;
+        font-size: 18px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50px;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.6);
+        animation: demoPulse 2s ease-in-out infinite;
+        z-index: 100;
+      }
+      
+      #demoBtn.visible {
+        display: block;
+        animation: demoAppear 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, demoPulse 2s ease-in-out infinite;
+      }
+      
+      @keyframes demoAppear {
+        0% { transform: translateX(-50%) scale(0) rotate(-10deg); opacity: 0; }
+        100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
+      }
+      
+      @keyframes demoPulse {
+        0%, 100% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.6); }
+        50% { box-shadow: 0 15px 60px rgba(102, 126, 234, 0.9), 0 0 30px rgba(118, 75, 162, 0.5); }
+      }
+      
+      /* Magical Transition Overlay */
+      #transition {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle, rgba(102,126,234,0.95) 0%, rgba(15,23,42,0.98) 100%);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+      }
+      
+      #transition.active {
+        display: flex;
+        animation: fadeIn 0.5s forwards;
+      }
+      
+      @keyframes fadeIn {
+        to { opacity: 1; }
+      }
+      
+      .transition-content {
+        text-align: center;
+        color: white;
+      }
+      
+      .scan-line {
+        width: 200px;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        margin: 20px auto;
+        animation: scan 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes scan {
+        0%, 100% { transform: translateX(-100px); }
+        50% { transform: translateX(100px); }
+      }
+      
       input[type="range"] { width: 220px; }
       #info { width: 100%; margin-top: 6px; font-size: 14px; opacity: 0.95; line-height: 1.3; }
+      
+      /* Selection indicators */
+      .pill.selected {
+        background: rgba(56, 189, 248, 0.3);
+        border: 2px solid #38bdf8;
+      }
     </style>
   </head>
 
   <body>
+    <!-- Transition Overlay -->
+    <div id="transition">
+      <div class="transition-content">
+        <h2 style="font-size: 28px; margin-bottom: 10px;">⚡ Preparing Simulation</h2>
+        <div class="scan-line"></div>
+        <p style="opacity: 0.8;">Analyzing energy flow...</p>
+      </div>
+    </div>
+
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
       <a-assets>
-        <!-- TV MODEL IS BROKEN - using placeholder for now -->
         <a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
         <a-asset-item id="m-bulb" src="3D_MODEL/led_light_bulb.glb"></a-asset-item>
-
         <a-asset-item id="m-solar" src="3D_MODEL/Flat_Solar_Panel.glb"></a-asset-item>
         <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
       </a-assets>
@@ -43,8 +138,7 @@
       <a-marker preset="hiro" emitevents="true" id="marker"
                 smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
 
-        <!-- Device entity - TV uses placeholder box -->
-        <a-entity id="device"></a-entity>
+        <a-entity id="device" visible="false"></a-entity>
 
         <a-entity id="renewablePivot" visible="false">
           <a-entity id="renewable"></a-entity>
@@ -59,32 +153,32 @@
       <div class="pill" id="status">Status: Waiting for marker…</div>
 
       <div id="row">
-        <button onclick="pickDevice('TV')">TV (placeholder)</button>
+        <button onclick="pickDevice('TV')">TV</button>
         <button onclick="pickDevice('Fan')">Fan</button>
         <button onclick="pickDevice('Bulb')">Bulb</button>
 
         <button class="secondary" onclick="pickRenewable('Solar')">Solar</button>
         <button class="secondary" onclick="pickRenewable('Wind')">Wind</button>
-
-        <button class="secondary" onclick="goDemo()">Demo</button>
       </div>
 
       <div id="row">
         <span class="pill">Hours/day: <span id="hoursLabel">4</span></span>
         <input id="hours" type="range" min="1" max="24" value="4" oninput="updateHours(this.value)" />
-        <span class="pill">Energy: <span id="energyLabel">480</span> Wh/day</span>
-        <span class="pill" id="recommended">Recommended: Solar</span>
+        <span class="pill">Energy: <span id="energyLabel">--</span> Wh/day</span>
+        <span class="pill" id="recommended">Select device & renewable</span>
       </div>
 
-      <div id="info">TV model broken - using placeholder. Replace smart_tv.glb with working model.</div>
+      <div id="info">Select a device and renewable energy source to begin.</div>
     </div>
+
+    <!-- Premium Demo Button (appears when both selected) -->
+    <button id="demoBtn" onclick="goDemo()">🎬 Watch Demo</button>
 
     <script>
       const MODEL_CONFIG = {
         TV:   { pos: '-0.25 0.20 0', scale: '0.3 0.15 0.02', rot: '0 0 0' },
         Fan:  { pos: '-0.25 0.20 0', scale: '0.1 0.1 0.1', rot: '-90 0 0' },
         Bulb: { pos: '-0.25 0.20 0', scale: '5 5 5', rot: '0 0 0' },
-
         Solar:{ pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' },
         Wind: { pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' }
       };
@@ -93,29 +187,48 @@
       const DEVICE_MODEL = { Fan: '#m-fan', Bulb: '#m-bulb' };
       const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
 
-      let selectedDevice = 'TV';
-      let selectedRenew = 'Solar';
+      let selectedDevice = null;  // No pre-selection
+      let selectedRenew = null;   // No pre-selection
       let hoursPerDay = 4;
 
       const deviceEl = () => document.querySelector('#device');
       const renewPivotEl = () => document.querySelector('#renewablePivot');
       const renewEl  = () => document.querySelector('#renewable');
+      const demoBtn = document.querySelector('#demoBtn');
 
       function whPerDay(w, h) { return Math.round(w * h); }
 
       function updateUI() {
-        const watts = DEVICE_WATTS[selectedDevice];
-        const wh = whPerDay(watts, hoursPerDay);
-        document.querySelector('#energyLabel').textContent = String(wh);
+        const energyLabel = document.querySelector('#energyLabel');
+        const recommended = document.querySelector('#recommended');
+        const info = document.querySelector('#info');
+        
         document.querySelector('#hoursLabel').textContent = String(hoursPerDay);
 
-        const rec = (selectedDevice === 'Bulb') ? 'Solar'
-                  : (selectedDevice === 'Fan') ? 'Wind'
-                  : 'Try both';
-        document.querySelector('#recommended').textContent = `Recommended: ${rec}`;
+        if (selectedDevice && selectedRenew) {
+          const watts = DEVICE_WATTS[selectedDevice];
+          const wh = whPerDay(watts, hoursPerDay);
+          energyLabel.textContent = String(wh);
 
-        document.querySelector('#info').textContent =
-          `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Selected: ${selectedRenew}.`;
+          const rec = (selectedDevice === 'Bulb') ? 'Solar'
+                    : (selectedDevice === 'Fan') ? 'Wind'
+                    : 'Try both';
+          recommended.textContent = `Recommended: ${rec}`;
+
+          info.textContent = `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Selected: ${selectedRenew}.`;
+          
+          // Show premium Demo button
+          demoBtn.classList.add('visible');
+        } else {
+          energyLabel.textContent = '--';
+          recommended.textContent = 'Select device & renewable';
+          info.textContent = selectedDevice 
+            ? 'Now select a renewable energy source.'
+            : 'Select a device and renewable energy source to begin.';
+          
+          // Hide Demo button
+          demoBtn.classList.remove('visible');
+        }
       }
 
       function clearEntity(el) {
@@ -139,7 +252,6 @@
         d.setAttribute('visible', true);
 
         if (name === 'TV') {
-          // TV placeholder (black screen box)
           d.setAttribute('geometry', 'primitive: box');
           d.setAttribute('material', 'color: #1a1a1a');
         } else {
@@ -176,9 +288,18 @@
       }
 
       function goDemo() {
-        const d = selectedDevice.toLowerCase();
-        const r = (selectedRenew.toLowerCase() === 'wind') ? 'turbine' : 'solar';
-        location.href = `demo.html?device=${encodeURIComponent(d)}&renew=${encodeURIComponent(r)}`;
+        if (!selectedDevice || !selectedRenew) return;
+
+        // Show magical transition
+        const overlay = document.querySelector('#transition');
+        overlay.classList.add('active');
+
+        // Wait for animation, then navigate
+        setTimeout(() => {
+          const d = selectedDevice.toLowerCase();
+          const r = (selectedRenew.toLowerCase() === 'wind') ? 'turbine' : 'solar';
+          location.href = `demo.html?device=${encodeURIComponent(d)}&renew=${encodeURIComponent(r)}`;
+        }, 2000);
       }
 
       const marker = document.querySelector('#marker');
@@ -186,8 +307,8 @@
 
       marker.addEventListener('markerFound', () => {
         status.textContent = 'Status: Marker found ✅';
-        pickDevice(selectedDevice);
-        pickRenewable(selectedRenew);
+        if (selectedDevice) pickDevice(selectedDevice);
+        if (selectedRenew) pickRenewable(selectedRenew);
       });
 
       marker.addEventListener('markerLost', () => {
