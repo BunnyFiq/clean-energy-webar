@@ -82,16 +82,16 @@
       // rotation is "x y z" in degrees. [web:514]
       const MODEL_CONFIG = {
         // Make TV obviously visible:
-        TV: { pos: '0 1.0 0', scale: '20 20 20', rot: '0 0 0' },
+        TV: { pos: '0 1.0 0', scale: '10 10 10', rot: '0 0 0' },
 
         // "Standing straight" defaults (if any still wrong, flip X between 90 and -90):
         Fan:  { pos: '-0.25 0.20 0', scale: '0.1 0.1 0.1', rot: '-90 0 0' },
         Bulb: { pos: '-0.25 0.20 0', scale: '5 5 5', rot: '0 0 0' },
 
         // Solar panel: if you want it vertical, keep -90. If you want it flat on marker, use 0 0 0.
-        Solar:{ pos: '0.25 0.20 0',  scale: '0.1 0.1 0.1',  rot: '-90 0 0' },
+        Solar:{ pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' },
 
-        Wind: { pos: '0.25 0.20 0',  scale: '0.1 0.1 0.1',  rot: '-90 0 0' }
+        Wind: { pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' }
       };
 
       const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
@@ -204,6 +204,7 @@
     </script>
   </body>
 </html>
+
 
 
 
