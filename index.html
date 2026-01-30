@@ -3,391 +3,323 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AR Demo - Clean Energy</title>
+    <title>AR Clean Energy Explorer</title>
+
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
       
-      body { 
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      #ui {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.78);
+        color: white;
+        padding: 12px 12px 80px 12px; /* Reduced bottom padding */
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      
+      .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
+      #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
+      
+      button { 
+        padding: 10px 12px; border: 0; border-radius: 12px;
+        background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      button:hover { transform: scale(1.05); }
+      button.secondary { background: #38bdf8; color: #06283d; }
+      
+      /* SMALLER Demo Button - NO TEXT OVERLAY */
+      #demoBtn {
+        display: none;
+        position: fixed;
+        bottom: 15px; /* Lower position */
+        left: 50%;
+        transform: translateX(-50%) scale(0);
+        padding: 12px 28px; /* Smaller padding */
+        font-size: 15px; /* Smaller font */
+        font-weight: 800;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 20px;
-        overflow-y: auto;
+        color: white;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 30px; /* Tighter radius */
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        z-index: 100;
       }
-
-      #container {
-        width: 100%;
-        max-width: 700px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        padding: 25px;
-        animation: slideIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-      }
-
-      @keyframes slideIn {
-        from { transform: translateY(50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-
-      h1 {
-        text-align: center;
-        color: #1a1a2e;
-        margin-bottom: 8px;
-        font-size: 26px;
-      }
-
-      .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 25px;
-        font-size: 14px;
-      }
-
-      .status-bar {
-        text-align: center;
-        padding: 10px;
-        background: rgba(56, 189, 248, 0.1);
-        border-radius: 8px;
-        color: #0c4a6e;
-        font-weight: 600;
-        margin-bottom: 20px;
-        font-size: 14px;
-      }
-
-      /* Item Cards */
-      .items-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 25px;
-      }
-
-      @media (max-width: 600px) {
-        .items-row { grid-template-columns: 1fr; }
-      }
-
-      .item-card {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 12px;
-        padding: 12px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .item-icon {
-        width: 50px;
-        height: 50px;
-        background: white;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        flex-shrink: 0;
-      }
-
-      .item-info {
-        flex: 1;
-      }
-
-      .item-label {
-        font-size: 13px;
-        color: #666;
-        margin-bottom: 2px;
-      }
-
-      .item-name {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1a1a2e;
-      }
-
-      /* SINGLE VIDEO */
-      .video-frame {
-        position: relative;
-        background: #000;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        margin-bottom: 25px;
-      }
-
-      video {
-        width: 100%;
+      
+      #demoBtn.visible {
         display: block;
-        background: #1a1a1a;
+        animation: demoAppear 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, demoPulse 2s ease-in-out infinite;
       }
-
-      /* Play Button */
-      .play-overlay {
-        position: absolute;
+      
+      @keyframes demoAppear {
+        0% { transform: translateX(-50%) scale(0) rotate(-5deg); opacity: 0; }
+        100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
+      }
+      
+      @keyframes demoPulse {
+        0%, 100% { box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5); }
+        50% { box-shadow: 0 8px 35px rgba(102, 126, 234, 0.7); }
+      }
+      
+      /* Transition Overlay */
+      #transition {
+        position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        flex-direction: column;
+        background: radial-gradient(circle, rgba(102,126,234,0.95) 0%, rgba(15,23,42,0.98) 100%);
+        display: none;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
+        z-index: 9999;
+        opacity: 0;
       }
-
-      .play-overlay:hover {
-        background: rgba(0, 0, 0, 0.6);
-      }
-
-      .play-overlay.hidden {
-        display: none;
-      }
-
-      .play-button {
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 50%;
+      
+      #transition.active {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-        transition: all 0.3s;
-        margin-bottom: 15px;
+        animation: fadeIn 0.5s forwards;
       }
-
-      .play-overlay:hover .play-button {
-        transform: scale(1.1);
-        background: white;
+      
+      @keyframes fadeIn {
+        to { opacity: 1; }
       }
-
-      .play-icon {
-        width: 0;
-        height: 0;
-        border-left: 26px solid #667eea;
-        border-top: 16px solid transparent;
-        border-bottom: 16px solid transparent;
-        margin-left: 6px;
-      }
-
-      .play-text {
+      
+      .transition-content {
+        text-align: center;
         color: white;
-        font-size: 16px;
-        font-weight: 700;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       }
-
-      /* Action Buttons */
-      #actionButtons {
-        display: none;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
+      
+      .scan-line {
+        width: 200px;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        margin: 20px auto;
+        animation: scan 1.5s ease-in-out infinite;
       }
-
-      #actionButtons.visible {
-        display: flex;
-        animation: slideUp 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      
+      @keyframes scan {
+        0%, 100% { transform: translateX(-100px); }
+        50% { transform: translateX(100px); }
       }
-
-      @keyframes slideUp {
-        from { transform: translateY(30px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-
-      #actionButtons button {
-        padding: 14px 28px;
-        font-size: 15px;
-        font-weight: 700;
-        border: 0;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-
-      #replayBtn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-      }
-
-      #replayBtn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-      }
-
-      #backBtn {
-        background: white;
-        color: #0f172a;
-        border: 2px solid #e0e0e0;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      }
-
-      #backBtn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-      }
+      
+      input[type="range"] { width: 220px; }
+      #info { width: 100%; margin-top: 6px; font-size: 14px; opacity: 0.95; line-height: 1.3; }
     </style>
   </head>
 
   <body>
-    <div id="container">
-      <h1>⚡ Energy Flow Demo</h1>
-      <p class="subtitle">Watch how renewable energy powers your device</p>
-
-      <div class="status-bar" id="statusBar">Click play to start the demo</div>
-
-      <!-- Item Cards -->
-      <div class="items-row">
-        <div class="item-card">
-          <div class="item-icon" id="deviceIcon">📺</div>
-          <div class="item-info">
-            <div class="item-label">Device</div>
-            <div class="item-name" id="deviceName">Smart TV</div>
-          </div>
-        </div>
-
-        <div class="item-card">
-          <div class="item-icon" id="renewIcon">☀️</div>
-          <div class="item-info">
-            <div class="item-label">Renewable</div>
-            <div class="item-name" id="renewName">Solar Panel</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SINGLE COMBO VIDEO -->
-      <div class="video-frame">
-        <video id="video" playsinline preload="auto"></video>
-        
-        <div class="play-overlay" id="playOverlay" onclick="playVideo()">
-          <div class="play-button">
-            <div class="play-icon"></div>
-          </div>
-          <div class="play-text">▶️ Play Demo</div>
-        </div>
-      </div>
-
-      <div id="actionButtons">
-        <button id="replayBtn" onclick="replay()">🔄 Replay</button>
-        <button id="backBtn" onclick="goBack()">🔙 Try Other Device</button>
+    <div id="transition">
+      <div class="transition-content">
+        <h2 style="font-size: 28px; margin-bottom: 10px;">⚡ Preparing Simulation</h2>
+        <div class="scan-line"></div>
+        <p style="opacity: 0.8;">Analyzing energy flow...</p>
       </div>
     </div>
 
+    <a-scene 
+      embedded 
+      arjs="sourceType: webcam; 
+            debugUIEnabled: false; 
+            detectionMode: mono_and_matrix; 
+            matrixCodeType: 3x3;
+            trackingMethod: best;
+            maxDetectionRate: 60;
+            canvasWidth: 640;
+            canvasHeight: 480;">
+      
+      <a-assets>
+        <a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
+        <a-asset-item id="m-bulb" src="3D_MODEL/led_light_bulb.glb"></a-asset-item>
+        <a-asset-item id="m-solar" src="3D_MODEL/Flat_Solar_Panel.glb"></a-asset-item>
+        <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
+      </a-assets>
+
+      <a-marker 
+        preset="hiro" 
+        emitevents="true" 
+        id="marker"
+        smooth="true" 
+        smoothCount="3" 
+        smoothTolerance="0.05" 
+        smoothThreshold="3">
+
+        <a-entity id="device" visible="false"></a-entity>
+
+        <a-entity id="renewablePivot" visible="false">
+          <a-entity id="renewable"></a-entity>
+        </a-entity>
+
+      </a-marker>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <div id="ui">
+      <div class="pill" id="status">Status: Waiting for marker…</div>
+
+      <div id="row">
+        <button onclick="pickDevice('TV')">TV</button>
+        <button onclick="pickDevice('Fan')">Fan</button>
+        <button onclick="pickDevice('Bulb')">Bulb</button>
+
+        <button class="secondary" onclick="pickRenewable('Solar')">Solar</button>
+        <button class="secondary" onclick="pickRenewable('Wind')">Wind</button>
+      </div>
+
+      <div id="row">
+        <span class="pill">Hours/day: <span id="hoursLabel">4</span></span>
+        <input id="hours" type="range" min="1" max="24" value="4" oninput="updateHours(this.value)" />
+        <span class="pill">Energy: <span id="energyLabel">--</span> Wh/day</span>
+        <span class="pill" id="recommended">Select device & renewable</span>
+      </div>
+
+      <div id="info">Select a device and renewable energy source to begin.</div>
+    </div>
+
+    <!-- SMALLER Demo Button -->
+    <button id="demoBtn" onclick="goDemo()">🎬 Watch Demo</button>
+
     <script>
-      const params = new URLSearchParams(location.search);
-      const device = params.get('device') || 'tv';
-      const renew = params.get('renew') || 'solar';
-
-      const video = document.querySelector('#video');
-      const playOverlay = document.querySelector('#playOverlay');
-      const actionButtons = document.querySelector('#actionButtons');
-      const statusBar = document.querySelector('#statusBar');
-
-      const ITEM_DATA = {
-        tv: { icon: '📺', name: 'Smart TV' },
-        fan: { icon: '🌀', name: 'Fan' },
-        bulb: { icon: '💡', name: 'LED Bulb' },
-        solar: { icon: '☀️', name: 'Solar Panel' },
-        turbine: { icon: '💨', name: 'Wind Turbine' }
+      const MODEL_CONFIG = {
+        TV:   { pos: '-0.25 0.20 0', scale: '0.3 0.15 0.02', rot: '0 0 0' },
+        Fan:  { pos: '-0.25 0.20 0', scale: '0.1 0.1 0.1', rot: '-90 0 0' },
+        Bulb: { pos: '-0.25 0.20 0', scale: '5 5 5', rot: '0 0 0' },
+        Solar:{ pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' },
+        Wind: { pos: '0.25 0.20 0',  scale: '0.3 0.3 0.3',  rot: '-90 0 0' }
       };
 
-      // FIX: Use actual file naming pattern: device_renewable.mp4
-      const videoSrc = `${device}_${renew}.mp4`;
-      
-      console.log('Loading video:', videoSrc);
-      video.src = videoSrc;
+      const DEVICE_WATTS = { TV: 120, Fan: 50, Bulb: 10 };
+      const DEVICE_MODEL = { Fan: '#m-fan', Bulb: '#m-bulb' };
+      const RENEW_MODEL  = { Solar: '#m-solar', Wind: '#m-wind' };
 
-      // Set item cards
-      const deviceData = ITEM_DATA[device];
-      const renewData = ITEM_DATA[renew];
+      let selectedDevice = null;
+      let selectedRenew = null;
+      let hoursPerDay = 4;
 
-      document.querySelector('#deviceIcon').textContent = deviceData.icon;
-      document.querySelector('#deviceName').textContent = deviceData.name;
+      const deviceEl = () => document.querySelector('#device');
+      const renewPivotEl = () => document.querySelector('#renewablePivot');
+      const renewEl  = () => document.querySelector('#renewable');
+      const demoBtn = document.querySelector('#demoBtn');
 
-      document.querySelector('#renewIcon').textContent = renewData.icon;
-      document.querySelector('#renewName').textContent = renewData.name;
+      function whPerDay(w, h) { return Math.round(w * h); }
 
-      // Video event handlers
-      video.addEventListener('loadeddata', () => {
-        console.log('✅ Video loaded successfully!');
-        console.log('Duration:', video.duration + 's');
-        console.log('Resolution:', video.videoWidth + 'x' + video.videoHeight);
-      });
-
-      video.addEventListener('error', (e) => {
-        console.error('❌ Video failed to load!');
-        const error = video.error;
-        let msg = 'Unknown error';
-        if (error) {
-          switch(error.code) {
-            case 1: msg = 'Download aborted'; break;
-            case 2: msg = 'Network error'; break;
-            case 3: msg = 'Corrupt file or unsupported codec'; break;
-            case 4: msg = 'File not found: ' + videoSrc; break;
-          }
-        }
-        statusBar.textContent = '❌ Video error: ' + msg;
-        statusBar.style.background = 'rgba(239, 68, 68, 0.2)';
-        console.error('Error details:', error);
-      });
-
-      // Play video
-      function playVideo() {
-        video.muted = false;
+      function updateUI() {
+        const energyLabel = document.querySelector('#energyLabel');
+        const recommended = document.querySelector('#recommended');
+        const info = document.querySelector('#info');
         
-        video.play()
-          .then(() => {
-            console.log('▶️ Video playing with sound');
-            playOverlay.classList.add('hidden');
-            statusBar.textContent = '▶️ Video playing...';
-          })
-          .catch(err => {
-            console.error('Autoplay blocked, trying muted:', err);
-            // Fallback: muted
-            video.muted = true;
-            video.play();
-            playOverlay.classList.add('hidden');
-            statusBar.textContent = '🔇 Playing (muted - tap video to unmute)';
-          });
-      }
+        document.querySelector('#hoursLabel').textContent = String(hoursPerDay);
 
-      // Video ended
-      video.addEventListener('ended', () => {
-        actionButtons.classList.add('visible');
-        statusBar.textContent = '✅ Demo Complete!';
-        statusBar.style.background = 'rgba(34, 197, 94, 0.2)';
-      });
+        if (selectedDevice && selectedRenew) {
+          const watts = DEVICE_WATTS[selectedDevice];
+          const wh = whPerDay(watts, hoursPerDay);
+          energyLabel.textContent = String(wh);
 
-      // Replay
-      function replay() {
-        actionButtons.classList.remove('visible');
-        video.pause();
-        video.currentTime = 0;
-        playOverlay.classList.remove('hidden');
-        statusBar.textContent = 'Click play to start the demo';
-        statusBar.style.background = 'rgba(56, 189, 248, 0.1)';
-      }
+          const rec = (selectedDevice === 'Bulb') ? 'Solar'
+                    : (selectedDevice === 'Fan') ? 'Wind'
+                    : 'Try both';
+          recommended.textContent = `Recommended: ${rec}`;
 
-      // Go back
-      function goBack() {
-        location.href = 'index.html';
-      }
-
-      // Allow click on video to unmute
-      video.addEventListener('click', () => {
-        if (video.muted) {
-          video.muted = false;
-          statusBar.textContent = '🔊 Sound enabled!';
-          setTimeout(() => {
-            statusBar.textContent = '▶️ Video playing...';
-          }, 2000);
+          info.textContent = `${selectedDevice}: ${watts}W × ${hoursPerDay}h/day = ${wh} Wh/day. Selected: ${selectedRenew}.`;
+          
+          demoBtn.classList.add('visible');
+        } else {
+          energyLabel.textContent = '--';
+          recommended.textContent = 'Select device & renewable';
+          info.textContent = selectedDevice 
+            ? 'Now select a renewable energy source.'
+            : 'Select a device and renewable energy source to begin.';
+          
+          demoBtn.classList.remove('visible');
         }
+      }
+
+      function clearEntity(el) {
+        el.removeAttribute('gltf-model');
+        el.removeAttribute('geometry');
+        el.removeAttribute('material');
+      }
+
+      function applyTransform(el, cfg) {
+        el.setAttribute('position', cfg.pos);
+        el.setAttribute('scale', cfg.scale);
+        el.setAttribute('rotation', cfg.rot);
+      }
+
+      function pickDevice(name) {
+        selectedDevice = name;
+        const d = deviceEl();
+
+        clearEntity(d);
+        applyTransform(d, MODEL_CONFIG[name]);
+        d.setAttribute('visible', true);
+
+        if (name === 'TV') {
+          d.setAttribute('geometry', 'primitive: box');
+          d.setAttribute('material', 'color: #1a1a1a');
+        } else {
+          d.setAttribute('gltf-model', DEVICE_MODEL[name]);
+        }
+
+        updateUI();
+      }
+
+      function pickRenewable(type) {
+        selectedRenew = type;
+
+        const pivot = renewPivotEl();
+        const child = renewEl();
+
+        pivot.setAttribute('visible', true);
+        applyTransform(pivot, MODEL_CONFIG[type]);
+
+        child.setAttribute('position', '0 0 0');
+        child.setAttribute('rotation', '0 0 0');
+        child.setAttribute('scale', '1 1 1');
+        child.setAttribute('visible', true);
+
+        child.removeAttribute('gltf-model');
+        child.setAttribute('gltf-model', RENEW_MODEL[type]);
+        child.removeAttribute('animation');
+
+        updateUI();
+      }
+
+      function updateHours(v) {
+        hoursPerDay = Number(v);
+        updateUI();
+      }
+
+      function goDemo() {
+        if (!selectedDevice || !selectedRenew) return;
+
+        const overlay = document.querySelector('#transition');
+        overlay.classList.add('active');
+
+        setTimeout(() => {
+          const d = selectedDevice.toLowerCase();
+          const r = (selectedRenew.toLowerCase() === 'wind') ? 'turbine' : 'solar';
+          location.href = `demo.html?device=${encodeURIComponent(d)}&renew=${encodeURIComponent(r)}`;
+        }, 2000);
+      }
+
+      const marker = document.querySelector('#marker');
+      const status = document.querySelector('#status');
+
+      marker.addEventListener('markerFound', () => {
+        status.textContent = 'Status: Marker found ✅';
+        if (selectedDevice) pickDevice(selectedDevice);
+        if (selectedRenew) pickRenewable(selectedRenew);
       });
+
+      marker.addEventListener('markerLost', () => {
+        status.textContent = 'Status: Waiting for marker…';
+      });
+
+      updateUI();
     </script>
   </body>
 </html>
