@@ -5,42 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AR Demo - Clean Energy</title>
 
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-
     <style>
-      body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       
-      #playPrompt {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        z-index: 9999; color: white; text-align: center; padding: 20px;
-      }
-      #playPrompt h2 { font-size: 24px; margin-bottom: 20px; }
-      #playPrompt button {
-        padding: 20px 40px; font-size: 20px; background: #38bdf8;
-        border: 0; border-radius: 12px; color: white; font-weight: bold;
-        cursor: pointer; transition: all 0.3s;
-      }
-      #playPrompt button:active { background: #0ea5e9; transform: scale(0.95); }
-
-      #status {
-        position: fixed; top: 20px; left: 20px; right: 20px;
-        background: rgba(0,0,0,0.8); color: white;
-        padding: 15px; border-radius: 10px; text-align: center;
+      body { 
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
       }
 
-      /* Action buttons (appear after video ends) */
-      #actionButtons {
-        position: fixed;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
+      #container {
+        width: 100%;
+        max-width: 900px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 30px;
+        animation: slideIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+
+      @keyframes slideIn {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      h1 {
+        text-align: center;
+        color: #1a1a2e;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      #videoGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 20px;
-        z-index: 100;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        #videoGrid { grid-template-columns: 1fr; }
+      }
+
+      .video-wrapper {
+        position: relative;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .video-label {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        z-index: 10;
+      }
+
+      video {
+        width: 100%;
+        display: block;
+        border-radius: 12px;
+      }
+
+      /* Unmute prompt (only shows if autoplay with sound fails) */
+      #unmutePrompt {
+        display: none;
+        text-align: center;
+        padding: 20px;
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        margin-bottom: 20px;
+      }
+
+      #unmutePrompt.visible {
+        display: block;
+        animation: bounce 0.6s;
+      }
+
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      #unmutePrompt button {
+        margin-top: 10px;
+        padding: 12px 24px;
+        background: #ffc107;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      #unmutePrompt button:hover {
+        background: #ffb300;
+        transform: scale(1.05);
+      }
+
+      /* Action buttons */
+      #actionButtons {
+        display: none;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
       }
 
       #actionButtons.visible {
@@ -49,8 +137,8 @@
       }
 
       @keyframes slideUp {
-        from { transform: translateX(-50%) translateY(100px); opacity: 0; }
-        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
 
       #actionButtons button {
@@ -77,6 +165,7 @@
       #backBtn {
         background: white;
         color: #0f172a;
+        border: 2px solid #e0e0e0;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
       }
 
@@ -84,36 +173,49 @@
         transform: translateY(-3px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       }
+
+      .status-bar {
+        text-align: center;
+        padding: 12px;
+        background: rgba(56, 189, 248, 0.1);
+        border-radius: 8px;
+        color: #0c4a6e;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
     </style>
   </head>
 
   <body>
-    <div id="playPrompt">
-      <h2>🔊 Tap to Enable Sound</h2>
-      <p style="margin-bottom: 30px;">Browser policy requires user interaction for audio.</p>
-      <button id="startBtn">Start AR Experience</button>
-    </div>
+    <div id="container">
+      <h1>⚡ Energy Flow Demo</h1>
+      <p class="subtitle">Watch how renewable energy powers your device</p>
 
-    <div id="status">Point camera at Hiro marker</div>
+      <div class="status-bar" id="statusBar">▶️ Videos playing...</div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <a-assets>
-        <video id="videoDevice" crossorigin="anonymous" preload="auto" loop></video>
-        <video id="videoRenew" crossorigin="anonymous" preload="auto" loop></video>
-      </a-assets>
+      <!-- Unmute fallback (only shows if needed) -->
+      <div id="unmutePrompt">
+        <p><strong>🔇 Sound is muted</strong></p>
+        <p style="margin: 8px 0; font-size: 14px;">Tap below to enable audio</p>
+        <button onclick="enableSound()">🔊 Enable Sound</button>
+      </div>
 
-      <a-marker preset="hiro" emitevents="true" id="marker">
-        <a-video src="#videoDevice" position="-0.25 0.2 0" rotation="-90 0 0" width="0.5" height="0.3"></a-video>
-        <a-video src="#videoRenew" position="0.25 0.2 0" rotation="-90 0 0" width="0.5" height="0.3"></a-video>
-      </a-marker>
+      <div id="videoGrid">
+        <div class="video-wrapper">
+          <div class="video-label" id="deviceLabel">Device</div>
+          <video id="videoDevice" playsinline></video>
+        </div>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+        <div class="video-wrapper">
+          <div class="video-label" id="renewLabel">Renewable</div>
+          <video id="videoRenew" playsinline></video>
+        </div>
+      </div>
 
-    <!-- Action Buttons (appear after video ends) -->
-    <div id="actionButtons">
-      <button id="replayBtn">🔄 Replay</button>
-      <button id="backBtn">🔙 Try Other Device</button>
+      <div id="actionButtons">
+        <button id="replayBtn" onclick="replay()">🔄 Replay</button>
+        <button id="backBtn" onclick="goBack()">🔙 Try Other Device</button>
+      </div>
     </div>
 
     <script>
@@ -123,9 +225,9 @@
 
       const deviceVideo = document.querySelector('#videoDevice');
       const renewVideo = document.querySelector('#videoRenew');
-      const marker = document.querySelector('#marker');
-      const status = document.querySelector('#status');
       const actionButtons = document.querySelector('#actionButtons');
+      const statusBar = document.querySelector('#statusBar');
+      const unmutePrompt = document.querySelector('#unmutePrompt');
 
       const VIDEO_MAP = {
         tv: '3D_MODEL/tv.mp4',
@@ -135,12 +237,58 @@
         turbine: '3D_MODEL/turbine.mp4'
       };
 
+      const LABELS = {
+        tv: '📺 Smart TV',
+        fan: '🌀 Fan',
+        bulb: '💡 LED Bulb',
+        solar: '☀️ Solar Panel',
+        turbine: '💨 Wind Turbine'
+      };
+
+      // Set video sources
       deviceVideo.src = VIDEO_MAP[device] || VIDEO_MAP.tv;
       renewVideo.src = VIDEO_MAP[renew] || VIDEO_MAP.solar;
 
-      let videosEnded = { device: false, renew: false };
+      // Set labels
+      document.querySelector('#deviceLabel').textContent = LABELS[device] || 'Device';
+      document.querySelector('#renewLabel').textContent = LABELS[renew] || 'Renewable';
 
-      // Detect when both videos finish
+      let videosEnded = { device: false, renew: false };
+      let soundEnabled = false;
+
+      // Try to play with sound automatically
+      function startVideos() {
+        deviceVideo.muted = false;
+        renewVideo.muted = false;
+
+        const playDevice = deviceVideo.play();
+        const playRenew = renewVideo.play();
+
+        Promise.all([playDevice, playRenew])
+          .then(() => {
+            console.log('Videos playing with sound');
+            soundEnabled = true;
+          })
+          .catch(err => {
+            console.log('Autoplay blocked, showing unmute prompt');
+            // Fallback: mute and show unmute button
+            deviceVideo.muted = true;
+            renewVideo.muted = true;
+            deviceVideo.play();
+            renewVideo.play();
+            unmutePrompt.classList.add('visible');
+          });
+      }
+
+      // Manual sound enable
+      function enableSound() {
+        deviceVideo.muted = false;
+        renewVideo.muted = false;
+        unmutePrompt.classList.remove('visible');
+        soundEnabled = true;
+      }
+
+      // Detect video end
       deviceVideo.addEventListener('ended', () => {
         videosEnded.device = true;
         checkBothEnded();
@@ -153,53 +301,32 @@
 
       function checkBothEnded() {
         if (videosEnded.device && videosEnded.renew) {
-          // Show action buttons
           actionButtons.classList.add('visible');
-          status.textContent = '✅ Demo Complete!';
+          statusBar.textContent = '✅ Demo Complete!';
+          statusBar.style.background = 'rgba(34, 197, 94, 0.2)';
         }
       }
 
-      // Start button
-      document.querySelector('#startBtn').addEventListener('click', () => {
-        document.querySelector('#playPrompt').style.display = 'none';
-        deviceVideo.muted = false;
-        renewVideo.muted = false;
-        deviceVideo.play().catch(e => console.log('Play blocked:', e));
-        renewVideo.play().catch(e => console.log('Play blocked:', e));
-        deviceVideo.pause();
-        renewVideo.pause();
-        deviceVideo.currentTime = 0;
-        renewVideo.currentTime = 0;
-      });
-
-      // Replay button
-      document.querySelector('#replayBtn').addEventListener('click', () => {
+      // Replay
+      function replay() {
         videosEnded = { device: false, renew: false };
         actionButtons.classList.remove('visible');
         deviceVideo.currentTime = 0;
         renewVideo.currentTime = 0;
         deviceVideo.play();
         renewVideo.play();
-        status.textContent = '▶️ Replaying demo...';
-      });
+        statusBar.textContent = '▶️ Replaying...';
+        statusBar.style.background = 'rgba(56, 189, 248, 0.1)';
+      }
 
-      // Back button
-      document.querySelector('#backBtn').addEventListener('click', () => {
+      // Go back
+      function goBack() {
         location.href = 'index.html';
-      });
+      }
 
-      marker.addEventListener('markerFound', () => {
-        status.textContent = '✅ Marker found - Playing videos';
-        deviceVideo.currentTime = 0;
-        renewVideo.currentTime = 0;
-        deviceVideo.play().catch(e => console.log('Play error:', e));
-        renewVideo.play().catch(e => console.log('Play error:', e));
-      });
-
-      marker.addEventListener('markerLost', () => {
-        status.textContent = 'Point camera at Hiro marker';
-        deviceVideo.pause();
-        renewVideo.pause();
+      // Start on page load
+      window.addEventListener('load', () => {
+        setTimeout(startVideos, 500);
       });
     </script>
   </body>
