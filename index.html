@@ -15,7 +15,7 @@
         position: fixed; left: 0; right: 0; bottom: 0;
         background: rgba(15, 23, 42, 0.78);
         color: white;
-        padding: 12px 12px 100px 12px; /* Extra bottom padding for Demo button */
+        padding: 12px 12px 80px 12px; /* Reduced bottom padding */
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
@@ -33,41 +33,40 @@
       button:hover { transform: scale(1.05); }
       button.secondary { background: #38bdf8; color: #06283d; }
       
-      /* Premium Demo Button - FIXED POSITION, DOESN'T BLOCK CONTROLS */
+      /* SMALLER Demo Button - NO TEXT OVERLAY */
       #demoBtn {
         display: none;
         position: fixed;
-        bottom: 20px; /* Above the UI panel */
+        bottom: 15px; /* Lower position */
         left: 50%;
         transform: translateX(-50%) scale(0);
-        padding: 18px 40px;
-        font-size: 18px;
-        font-weight: 900;
+        padding: 12px 28px; /* Smaller padding */
+        font-size: 15px; /* Smaller font */
+        font-weight: 800;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border: 3px solid rgba(255,255,255,0.3);
-        border-radius: 50px;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.6);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 30px; /* Tighter radius */
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
         z-index: 100;
-        pointer-events: auto;
       }
       
       #demoBtn.visible {
         display: block;
-        animation: demoAppear 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, demoPulse 2s ease-in-out infinite;
+        animation: demoAppear 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, demoPulse 2s ease-in-out infinite;
       }
       
       @keyframes demoAppear {
-        0% { transform: translateX(-50%) scale(0) rotate(-10deg); opacity: 0; }
+        0% { transform: translateX(-50%) scale(0) rotate(-5deg); opacity: 0; }
         100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
       }
       
       @keyframes demoPulse {
-        0%, 100% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.6); }
-        50% { box-shadow: 0 15px 60px rgba(102, 126, 234, 0.9), 0 0 30px rgba(118, 75, 162, 0.5); }
+        0%, 100% { box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5); }
+        50% { box-shadow: 0 8px 35px rgba(102, 126, 234, 0.7); }
       }
       
-      /* Magical Transition Overlay */
+      /* Transition Overlay */
       #transition {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -112,7 +111,6 @@
   </head>
 
   <body>
-    <!-- Transition Overlay -->
     <div id="transition">
       <div class="transition-content">
         <h2 style="font-size: 28px; margin-bottom: 10px;">⚡ Preparing Simulation</h2>
@@ -121,7 +119,6 @@
       </div>
     </div>
 
-    <!-- IMPROVED MARKER DETECTION: Higher sensitivity, faster response -->
     <a-scene 
       embedded 
       arjs="sourceType: webcam; 
@@ -140,7 +137,6 @@
         <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
       </a-assets>
 
-      <!-- IMPROVED MARKER: Lower smoothing thresholds for faster detection -->
       <a-marker 
         preset="hiro" 
         emitevents="true" 
@@ -183,7 +179,7 @@
       <div id="info">Select a device and renewable energy source to begin.</div>
     </div>
 
-    <!-- Premium Demo Button - POSITIONED ABOVE UI, DOESN'T BLOCK CONTROLS -->
+    <!-- SMALLER Demo Button -->
     <button id="demoBtn" onclick="goDemo()">🎬 Watch Demo</button>
 
     <script>
