@@ -22,7 +22,7 @@
 
       #container {
         width: 100%;
-        max-width: 900px;
+        max-width: 700px;
         background: rgba(255, 255, 255, 0.95);
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -60,7 +60,7 @@
         font-size: 14px;
       }
 
-      /* Item Cards - GREEN CIRCLE AREA (KEEP THIS) */
+      /* Item Cards */
       .items-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -110,7 +110,7 @@
         color: #1a1a2e;
       }
 
-      /* SINGLE VIDEO FRAME - REPLACES RED CIRCLE */
+      /* SINGLE VIDEO */
       .video-frame {
         position: relative;
         background: #000;
@@ -120,29 +120,16 @@
         margin-bottom: 25px;
       }
 
-      .videos-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0;
-      }
-
-      @media (max-width: 768px) {
-        .videos-grid { grid-template-columns: 1fr; }
-      }
-
       video {
         width: 100%;
         display: block;
         background: #1a1a1a;
       }
 
-      /* SINGLE PLAY BUTTON OVERLAY */
+      /* Play Button */
       .play-overlay {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         display: flex;
         flex-direction: column;
@@ -254,7 +241,7 @@
 
       <div class="status-bar" id="statusBar">Click play to start the demo</div>
 
-      <!-- GREEN CIRCLE - Item Cards (KEEP) -->
+      <!-- Item Cards -->
       <div class="items-row">
         <div class="item-card">
           <div class="item-icon" id="deviceIcon">📺</div>
@@ -273,15 +260,11 @@
         </div>
       </div>
 
-      <!-- RED CIRCLE REPLACEMENT - ONE VIDEO FRAME with both videos -->
+      <!-- SINGLE COMBO VIDEO -->
       <div class="video-frame">
-        <div class="videos-grid">
-          <video id="videoDevice" playsinline preload="auto"></video>
-          <video id="videoRenew" playsinline preload="auto"></video>
-        </div>
+        <video id="video" playsinline preload="auto"></video>
         
-        <!-- SINGLE PLAY BUTTON for both videos -->
-        <div class="play-overlay" id="playOverlay" onclick="playVideos()">
+        <div class="play-overlay" id="playOverlay" onclick="playVideo()">
           <div class="play-button">
             <div class="play-icon"></div>
           </div>
@@ -300,19 +283,10 @@
       const device = params.get('device') || 'tv';
       const renew = params.get('renew') || 'solar';
 
-      const deviceVideo = document.querySelector('#videoDevice');
-      const renewVideo = document.querySelector('#videoRenew');
+      const video = document.querySelector('#video');
       const playOverlay = document.querySelector('#playOverlay');
       const actionButtons = document.querySelector('#actionButtons');
       const statusBar = document.querySelector('#statusBar');
-
-      const VIDEO_MAP = {
-        tv: '3D_MODEL/tv.mp4',
-        fan: '3D_MODEL/fan.mp4',
-        bulb: '3D_MODEL/bulb.mp4',
-        solar: '3D_MODEL/solar.mp4',
-        turbine: '3D_MODEL/turbine.mp4'
-      };
 
       const ITEM_DATA = {
         tv: { icon: '📺', name: 'Smart TV' },
@@ -321,6 +295,12 @@
         solar: { icon: '☀️', name: 'Solar Panel' },
         turbine: { icon: '💨', name: 'Wind Turbine' }
       };
+
+      // FIX: Use actual file naming pattern: device_renewable.mp4
+      const videoSrc = `${device}_${renew}.mp4`;
+      
+      console.log('Loading video:', videoSrc);
+      video.src = videoSrc;
 
       // Set item cards
       const deviceData = ITEM_DATA[device];
@@ -332,97 +312,63 @@
       document.querySelector('#renewIcon').textContent = renewData.icon;
       document.querySelector('#renewName').textContent = renewData.name;
 
-      // Set video sources with error handling
-      const deviceSrc = VIDEO_MAP[device] || VIDEO_MAP.tv;
-      const renewSrc = VIDEO_MAP[renew] || VIDEO_MAP.solar;
+      // Video event handlers
+      video.addEventListener('loadeddata', () => {
+        console.log('✅ Video loaded successfully!');
+        console.log('Duration:', video.duration + 's');
+        console.log('Resolution:', video.videoWidth + 'x' + video.videoHeight);
+      });
 
-      console.log('Loading videos:', deviceSrc, renewSrc);
-
-      deviceVideo.src = deviceSrc;
-      renewVideo.src = renewSrc;
-
-      // Add error handlers
-      deviceVideo.addEventListener('error', (e) => {
-        console.error('Device video error:', e);
-        statusBar.textContent = '❌ Device video failed to load';
+      video.addEventListener('error', (e) => {
+        console.error('❌ Video failed to load!');
+        const error = video.error;
+        let msg = 'Unknown error';
+        if (error) {
+          switch(error.code) {
+            case 1: msg = 'Download aborted'; break;
+            case 2: msg = 'Network error'; break;
+            case 3: msg = 'Corrupt file or unsupported codec'; break;
+            case 4: msg = 'File not found: ' + videoSrc; break;
+          }
+        }
+        statusBar.textContent = '❌ Video error: ' + msg;
         statusBar.style.background = 'rgba(239, 68, 68, 0.2)';
+        console.error('Error details:', error);
       });
 
-      renewVideo.addEventListener('error', (e) => {
-        console.error('Renewable video error:', e);
-        statusBar.textContent = '❌ Renewable video failed to load';
-        statusBar.style.background = 'rgba(239, 68, 68, 0.2)';
-      });
-
-      // Add loaded handlers
-      deviceVideo.addEventListener('loadeddata', () => {
-        console.log('Device video loaded successfully');
-      });
-
-      renewVideo.addEventListener('loadeddata', () => {
-        console.log('Renewable video loaded successfully');
-      });
-
-      let videosEnded = { device: false, renew: false };
-
-      // SINGLE PLAY FUNCTION - plays BOTH videos
-      function playVideos() {
-        deviceVideo.muted = false;
-        renewVideo.muted = false;
+      // Play video
+      function playVideo() {
+        video.muted = false;
         
-        const playDevice = deviceVideo.play();
-        const playRenew = renewVideo.play();
-
-        Promise.all([playDevice, playRenew])
+        video.play()
           .then(() => {
-            console.log('Both videos playing');
+            console.log('▶️ Video playing with sound');
             playOverlay.classList.add('hidden');
-            statusBar.textContent = '▶️ Videos playing...';
+            statusBar.textContent = '▶️ Video playing...';
           })
           .catch(err => {
-            console.error('Autoplay failed:', err);
-            // Fallback: try muted
-            deviceVideo.muted = true;
-            renewVideo.muted = true;
-            deviceVideo.play();
-            renewVideo.play();
+            console.error('Autoplay blocked, trying muted:', err);
+            // Fallback: muted
+            video.muted = true;
+            video.play();
             playOverlay.classList.add('hidden');
-            statusBar.textContent = '🔇 Playing (muted - browser restriction)';
+            statusBar.textContent = '🔇 Playing (muted - tap video to unmute)';
           });
       }
 
-      // Detect video end
-      deviceVideo.addEventListener('ended', () => {
-        videosEnded.device = true;
-        checkBothEnded();
+      // Video ended
+      video.addEventListener('ended', () => {
+        actionButtons.classList.add('visible');
+        statusBar.textContent = '✅ Demo Complete!';
+        statusBar.style.background = 'rgba(34, 197, 94, 0.2)';
       });
-
-      renewVideo.addEventListener('ended', () => {
-        videosEnded.renew = true;
-        checkBothEnded();
-      });
-
-      function checkBothEnded() {
-        if (videosEnded.device && videosEnded.renew) {
-          actionButtons.classList.add('visible');
-          statusBar.textContent = '✅ Demo Complete!';
-          statusBar.style.background = 'rgba(34, 197, 94, 0.2)';
-        }
-      }
 
       // Replay
       function replay() {
-        videosEnded = { device: false, renew: false };
-        
         actionButtons.classList.remove('visible');
-        
-        deviceVideo.pause();
-        renewVideo.pause();
-        deviceVideo.currentTime = 0;
-        renewVideo.currentTime = 0;
-        
+        video.pause();
+        video.currentTime = 0;
         playOverlay.classList.remove('hidden');
-        
         statusBar.textContent = 'Click play to start the demo';
         statusBar.style.background = 'rgba(56, 189, 248, 0.1)';
       }
@@ -431,6 +377,17 @@
       function goBack() {
         location.href = 'index.html';
       }
+
+      // Allow click on video to unmute
+      video.addEventListener('click', () => {
+        if (video.muted) {
+          video.muted = false;
+          statusBar.textContent = '🔊 Sound enabled!';
+          setTimeout(() => {
+            statusBar.textContent = '▶️ Video playing...';
+          }, 2000);
+        }
+      });
     </script>
   </body>
 </html>
