@@ -1,69 +1,130 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Renewable Demo</title>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <style>
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1220; }
-    #bar{
-      position:fixed; left:0; right:0; top:0;
-      padding:12px; color:white; background:rgba(0,0,0,.55);
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      z-index: 9999;
-    }
-    button{ padding:10px 12px; border:0; border-radius:12px; font-weight:700; cursor:pointer; }
-    #label{ opacity:.95; }
-  </style>
-</head>
-<body>
-  <div id="bar">
-    <button onclick="goBack()">Back</button>
-    <div id="label">Demo</div>
-    <button onclick="play()">Play</button>
-  </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR Demo - Clean Energy</title>
 
-  <a-scene>
-    <a-assets>
-      <!-- iPhone-friendly attributes -->
-      <video id="demoVid" playsinline webkit-playsinline muted preload="auto" crossorigin="anonymous"></video>
-    </a-assets>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
-    <!-- Video “screen” -->
-    <a-video src="#demoVid"
-             position="0 1.6 -2.2"
-             width="2.6" height="1.46"></a-video>
+    <style>
+      body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; }
+      
+      /* Play button overlay */
+      #playPrompt {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        color: white;
+        text-align: center;
+        padding: 20px;
+      }
+      #playPrompt h2 { font-size: 24px; margin-bottom: 20px; }
+      #playPrompt button {
+        padding: 20px 40px;
+        font-size: 20px;
+        background: #38bdf8;
+        border: 0;
+        border-radius: 12px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      #playPrompt button:active { background: #0ea5e9; }
 
-    <a-entity camera position="0 1.6 0"></a-entity>
-  </a-scene>
+      #status {
+        position: fixed; top: 20px; left: 20px; right: 20px;
+        background: rgba(0,0,0,0.8); color: white;
+        padding: 15px; border-radius: 10px; text-align: center;
+      }
+    </style>
+  </head>
 
-  <script>
-    function qp(name){ return new URLSearchParams(location.search).get(name) || ''; }
+  <body>
+    <!-- User must tap to enable audio (browser requirement) -->
+    <div id="playPrompt">
+      <h2>🔊 Tap to Enable Sound</h2>
+      <p style="margin-bottom: 30px;">Browser policy requires user interaction for audio.</p>
+      <button id="startBtn">Start AR Experience</button>
+    </div>
 
-    const device = (qp('device') || 'tv').toLowerCase();       // tv / fan / bulb
-    const renew  = (qp('renew')  || 'solar').toLowerCase();    // solar / turbine
-    document.querySelector('#label').textContent = `Demo: ${device.toUpperCase()} + ${renew.toUpperCase()}`;
+    <div id="status">Point camera at Hiro marker</div>
 
-    const map = {
-      tv:   { solar: 'tv_solar.mp4',   turbine: 'tv_turbine.mp4' },
-      fan:  { solar: 'fan_solar.mp4',  turbine: 'fan_turbine.mp4' },
-      bulb: { solar: 'bulb_solar.mp4', turbine: 'bulb_turbine.mp4' }
-    };
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <a-assets>
+        <video id="videoDevice" crossorigin="anonymous" preload="auto" loop></video>
+        <video id="videoRenew" crossorigin="anonymous" preload="auto" loop></video>
+      </a-assets>
 
-    const file = (map[device] && map[device][renew]) ? map[device][renew] : 'tv_solar.mp4';
+      <a-marker preset="hiro" emitevents="true" id="marker">
+        <a-video src="#videoDevice" position="-0.25 0.2 0" rotation="-90 0 0" width="0.5" height="0.3"></a-video>
+        <a-video src="#videoRenew" position="0.25 0.2 0" rotation="-90 0 0" width="0.5" height="0.3"></a-video>
+      </a-marker>
 
-    const vid = document.querySelector('#demoVid');
-    vid.src = file; // because your mp4 files are in repo root
+      <a-entity camera></a-entity>
+    </a-scene>
 
-    function play(){
-      // iOS requires user gesture; this button is the gesture.
-      vid.play();
-    }
+    <script>
+      const params = new URLSearchParams(location.search);
+      const device = params.get('device') || 'tv';
+      const renew = params.get('renew') || 'solar';
 
-    function goBack(){
-      location.href = 'index.html';
-    }
-  </script>
-</body>
+      const deviceVideo = document.querySelector('#videoDevice');
+      const renewVideo = document.querySelector('#videoRenew');
+      const marker = document.querySelector('#marker');
+      const status = document.querySelector('#status');
+
+      // Video file paths
+      const VIDEO_MAP = {
+        tv: '3D_MODEL/tv.mp4',
+        fan: '3D_MODEL/fan.mp4',
+        bulb: '3D_MODEL/bulb.mp4',
+        solar: '3D_MODEL/solar.mp4',
+        turbine: '3D_MODEL/turbine.mp4'
+      };
+
+      deviceVideo.src = VIDEO_MAP[device] || VIDEO_MAP.tv;
+      renewVideo.src = VIDEO_MAP[renew] || VIDEO_MAP.solar;
+
+      // CRITICAL: User must tap to enable sound [web:609][web:611]
+      document.querySelector('#startBtn').addEventListener('click', () => {
+        document.querySelector('#playPrompt').style.display = 'none';
+
+        // Play both videos once to "unlock" audio (browser requirement)
+        deviceVideo.muted = false;
+        renewVideo.muted = false;
+        
+        deviceVideo.play().catch(e => console.log('Device video play blocked:', e));
+        renewVideo.play().catch(e => console.log('Renew video play blocked:', e));
+
+        // Pause immediately (will restart on markerFound)
+        deviceVideo.pause();
+        renewVideo.pause();
+        deviceVideo.currentTime = 0;
+        renewVideo.currentTime = 0;
+      });
+
+      marker.addEventListener('markerFound', () => {
+        status.textContent = '✅ Marker found - Playing videos';
+        
+        deviceVideo.currentTime = 0;
+        renewVideo.currentTime = 0;
+        
+        deviceVideo.play().catch(e => console.log('Play error:', e));
+        renewVideo.play().catch(e => console.log('Play error:', e));
+      });
+
+      marker.addEventListener('markerLost', () => {
+        status.textContent = 'Point camera at Hiro marker';
+        deviceVideo.pause();
+        renewVideo.pause();
+      });
+    </script>
+  </body>
 </html>
