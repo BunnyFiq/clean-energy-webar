@@ -11,43 +11,83 @@
     <style>
       body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; }
       
-      /* Play button overlay */
       #playPrompt {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        color: white;
-        text-align: center;
-        padding: 20px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        z-index: 9999; color: white; text-align: center; padding: 20px;
       }
       #playPrompt h2 { font-size: 24px; margin-bottom: 20px; }
       #playPrompt button {
-        padding: 20px 40px;
-        font-size: 20px;
-        background: #38bdf8;
-        border: 0;
-        border-radius: 12px;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
+        padding: 20px 40px; font-size: 20px; background: #38bdf8;
+        border: 0; border-radius: 12px; color: white; font-weight: bold;
+        cursor: pointer; transition: all 0.3s;
       }
-      #playPrompt button:active { background: #0ea5e9; }
+      #playPrompt button:active { background: #0ea5e9; transform: scale(0.95); }
 
       #status {
         position: fixed; top: 20px; left: 20px; right: 20px;
         background: rgba(0,0,0,0.8); color: white;
         padding: 15px; border-radius: 10px; text-align: center;
       }
+
+      /* Action buttons (appear after video ends) */
+      #actionButtons {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        gap: 20px;
+        z-index: 100;
+      }
+
+      #actionButtons.visible {
+        display: flex;
+        animation: slideUp 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+
+      #actionButtons button {
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 700;
+        border: 0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      #replayBtn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      #replayBtn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+      }
+
+      #backBtn {
+        background: white;
+        color: #0f172a;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      #backBtn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
     </style>
   </head>
 
   <body>
-    <!-- User must tap to enable audio (browser requirement) -->
     <div id="playPrompt">
       <h2>🔊 Tap to Enable Sound</h2>
       <p style="margin-bottom: 30px;">Browser policy requires user interaction for audio.</p>
@@ -70,6 +110,12 @@
       <a-entity camera></a-entity>
     </a-scene>
 
+    <!-- Action Buttons (appear after video ends) -->
+    <div id="actionButtons">
+      <button id="replayBtn">🔄 Replay</button>
+      <button id="backBtn">🔙 Try Other Device</button>
+    </div>
+
     <script>
       const params = new URLSearchParams(location.search);
       const device = params.get('device') || 'tv';
@@ -79,8 +125,8 @@
       const renewVideo = document.querySelector('#videoRenew');
       const marker = document.querySelector('#marker');
       const status = document.querySelector('#status');
+      const actionButtons = document.querySelector('#actionButtons');
 
-      // Video file paths
       const VIDEO_MAP = {
         tv: '3D_MODEL/tv.mp4',
         fan: '3D_MODEL/fan.mp4',
@@ -92,30 +138,60 @@
       deviceVideo.src = VIDEO_MAP[device] || VIDEO_MAP.tv;
       renewVideo.src = VIDEO_MAP[renew] || VIDEO_MAP.solar;
 
-      // CRITICAL: User must tap to enable sound [web:609][web:611]
+      let videosEnded = { device: false, renew: false };
+
+      // Detect when both videos finish
+      deviceVideo.addEventListener('ended', () => {
+        videosEnded.device = true;
+        checkBothEnded();
+      });
+
+      renewVideo.addEventListener('ended', () => {
+        videosEnded.renew = true;
+        checkBothEnded();
+      });
+
+      function checkBothEnded() {
+        if (videosEnded.device && videosEnded.renew) {
+          // Show action buttons
+          actionButtons.classList.add('visible');
+          status.textContent = '✅ Demo Complete!';
+        }
+      }
+
+      // Start button
       document.querySelector('#startBtn').addEventListener('click', () => {
         document.querySelector('#playPrompt').style.display = 'none';
-
-        // Play both videos once to "unlock" audio (browser requirement)
         deviceVideo.muted = false;
         renewVideo.muted = false;
-        
-        deviceVideo.play().catch(e => console.log('Device video play blocked:', e));
-        renewVideo.play().catch(e => console.log('Renew video play blocked:', e));
-
-        // Pause immediately (will restart on markerFound)
+        deviceVideo.play().catch(e => console.log('Play blocked:', e));
+        renewVideo.play().catch(e => console.log('Play blocked:', e));
         deviceVideo.pause();
         renewVideo.pause();
         deviceVideo.currentTime = 0;
         renewVideo.currentTime = 0;
       });
 
-      marker.addEventListener('markerFound', () => {
-        status.textContent = '✅ Marker found - Playing videos';
-        
+      // Replay button
+      document.querySelector('#replayBtn').addEventListener('click', () => {
+        videosEnded = { device: false, renew: false };
+        actionButtons.classList.remove('visible');
         deviceVideo.currentTime = 0;
         renewVideo.currentTime = 0;
-        
+        deviceVideo.play();
+        renewVideo.play();
+        status.textContent = '▶️ Replaying demo...';
+      });
+
+      // Back button
+      document.querySelector('#backBtn').addEventListener('click', () => {
+        location.href = 'index.html';
+      });
+
+      marker.addEventListener('markerFound', () => {
+        status.textContent = '✅ Marker found - Playing videos';
+        deviceVideo.currentTime = 0;
+        renewVideo.currentTime = 0;
         deviceVideo.play().catch(e => console.log('Play error:', e));
         renewVideo.play().catch(e => console.log('Play error:', e));
       });
