@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
 <style>
-/* ---- YOUR ORIGINAL STYLE (UNCHANGED) ---- */
 body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 #ui { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.78); color: white; padding: 12px 12px 80px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
@@ -31,61 +30,27 @@ input[type="range"] { width: 220px; }
 <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
 
 <a-assets>
-<a-asset-item id="m-fan" src="3D_MODEL/simple_fan.glb"></a-asset-item>
+<a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
 <a-asset-item id="m-bulb" src="3D_MODEL/led_light_bulb.glb"></a-asset-item>
 <a-asset-item id="m-solar" src="3D_MODEL/Flat_Solar_Panel.glb"></a-asset-item>
-<a-asset-item id="m-wind" src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
+<a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
 </a-assets>
 
 <!-- TV MARKER -->
-<a-marker type="pattern" url="MARKER/tv-marker.patt" emitevents="true" id="marker-tv">
-
-  <a-entity id="device-tv"
-    position="-0.25 0.20 0"
-    visible="false">
-  </a-entity>
-
-  <a-entity id="renewablePivot-tv"
-    position="0.25 0.20 0"
-    visible="false">
-    <a-entity id="renewable-tv"></a-entity>
-  </a-entity>
-
-</a-marker>
-
+<a-marker type="pattern" url="MARKER/tv-marker.patt" emitevents="true" id="marker-tv"></a-marker>
 
 <!-- FAN MARKER -->
-<a-marker type="pattern" url="MARKER/fan-marker.patt" emitevents="true" id="marker-fan">
-
-  <a-entity id="device-fan"
-    position="-0.25 0.20 0"
-    visible="false">
-  </a-entity>
-
-  <a-entity id="renewablePivot-fan"
-    position="0.25 0.20 0"
-    visible="false">
-    <a-entity id="renewable-fan"></a-entity>
-  </a-entity>
-
-</a-marker>
-
+<a-marker type="pattern" url="MARKER/fan-marker.patt" emitevents="true" id="marker-fan"></a-marker>
 
 <!-- BULB MARKER -->
-<a-marker type="pattern" url="MARKER/bulb-marker.patt" emitevents="true" id="marker-bulb">
+<a-marker type="pattern" url="MARKER/bulb-marker.patt" emitevents="true" id="marker-bulb"></a-marker>
 
-  <a-entity id="device-bulb"
-    position="-0.25 0.20 0"
-    visible="false">
-  </a-entity>
+<!-- ORIGINAL SINGLE DEVICE SYSTEM (UNCHANGED LOGIC SUPPORT) -->
+<a-entity id="device" visible="false"></a-entity>
 
-  <a-entity id="renewablePivot-bulb"
-    position="0.25 0.20 0"
-    visible="false">
-    <a-entity id="renewable-bulb"></a-entity>
-  </a-entity>
-
-</a-marker>
+<a-entity id="renewablePivot" visible="false">
+  <a-entity id="renewable"></a-entity>
+</a-entity>
 
 <a-entity camera></a-entity>
 </a-scene>
@@ -112,7 +77,7 @@ input[type="range"] { width: 220px; }
 
 <script>
 
-/* ---- YOUR ORIGINAL LOGIC BELOW (UNCHANGED) ---- */
+/* ---- YOUR ORIGINAL LOGIC (UNCHANGED) ---- */
 
 const MODEL_CONFIG = {
 TV:{ pos:'-0.25 0.20 0', scale:'0.3 0.15 0.02', rot:'0 0 0' },
@@ -124,7 +89,7 @@ Wind:{ pos:'0.25 0.20 0', scale:'0.3 0.3 0.3', rot:'-90 0 0' }
 
 const DEVICE_WATTS = { TV:120, Fan:50, Bulb:10 };
 const DEVICE_MODEL = { Fan:'#m-fan', Bulb:'#m-bulb' };
-const RENEW_MODEL = { Solar:'#m-solar', Wind:'#m-wind' };
+const RENEW_MODEL  = { Solar:'#m-solar', Wind:'#m-wind' };
 
 let selectedDevice=null;
 let selectedRenew=null;
@@ -199,23 +164,32 @@ const r=(selectedRenew.toLowerCase()==='wind')?'turbine':'solar';
 location.href=`demo.html?device=${d}&renew=${r}`;
 }
 
-/* ---- NEW MARKER DETECTION ---- */
+/* ---- ONLY MARKER LOGIC CHANGED ---- */
 
-document.querySelector('#marker-tv').addEventListener('markerFound',()=>{
+const markerTV = document.querySelector('#marker-tv');
+const markerFan = document.querySelector('#marker-fan');
+const markerBulb = document.querySelector('#marker-bulb');
+
+function attachTo(marker){
+marker.appendChild(deviceEl());
+marker.appendChild(renewPivotEl());
+}
+
+markerTV.addEventListener('markerFound',()=>{
 status.textContent='TV Marker detected ✅';
-selectedDevice='TV';
+attachTo(markerTV);
 pickDevice('TV');
 });
 
-document.querySelector('#marker-fan').addEventListener('markerFound',()=>{
+markerFan.addEventListener('markerFound',()=>{
 status.textContent='Fan Marker detected ✅';
-selectedDevice='Fan';
+attachTo(markerFan);
 pickDevice('Fan');
 });
 
-document.querySelector('#marker-bulb').addEventListener('markerFound',()=>{
+markerBulb.addEventListener('markerFound',()=>{
 status.textContent='Bulb Marker detected ✅';
-selectedDevice='Bulb';
+attachTo(markerBulb);
 pickDevice('Bulb');
 });
 
@@ -224,4 +198,3 @@ updateUI();
 
 </body>
 </html>
-
