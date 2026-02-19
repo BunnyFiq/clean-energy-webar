@@ -39,26 +39,52 @@ input[type="range"] { width: 220px; }
 
 <!-- TV MARKER -->
 <a-marker type="pattern" url="MARKER/tv-marker.patt" emitevents="true" id="marker-tv">
-<a-entity id="device" visible="false"></a-entity>
-<a-entity id="renewablePivot" visible="false">
-<a-entity id="renewable"></a-entity>
-</a-entity>
+
+  <a-entity id="device-tv"
+    position="-0.25 0.20 0"
+    visible="false">
+  </a-entity>
+
+  <a-entity id="renewablePivot-tv"
+    position="0.25 0.20 0"
+    visible="false">
+    <a-entity id="renewable-tv"></a-entity>
+  </a-entity>
+
 </a-marker>
+
 
 <!-- FAN MARKER -->
 <a-marker type="pattern" url="MARKER/fan-marker.patt" emitevents="true" id="marker-fan">
-<a-entity id="device" visible="false"></a-entity>
-<a-entity id="renewablePivot" visible="false">
-<a-entity id="renewable"></a-entity>
-</a-entity>
+
+  <a-entity id="device-fan"
+    position="-0.25 0.20 0"
+    visible="false">
+  </a-entity>
+
+  <a-entity id="renewablePivot-fan"
+    position="0.25 0.20 0"
+    visible="false">
+    <a-entity id="renewable-fan"></a-entity>
+  </a-entity>
+
 </a-marker>
+
 
 <!-- BULB MARKER -->
 <a-marker type="pattern" url="MARKER/bulb-marker.patt" emitevents="true" id="marker-bulb">
-<a-entity id="device" visible="false"></a-entity>
-<a-entity id="renewablePivot" visible="false">
-<a-entity id="renewable"></a-entity>
-</a-entity>
+
+  <a-entity id="device-bulb"
+    position="-0.25 0.20 0"
+    visible="false">
+  </a-entity>
+
+  <a-entity id="renewablePivot-bulb"
+    position="0.25 0.20 0"
+    visible="false">
+    <a-entity id="renewable-bulb"></a-entity>
+  </a-entity>
+
 </a-marker>
 
 <a-entity camera></a-entity>
@@ -198,3 +224,4 @@ updateUI();
 
 </body>
 </html>
+
