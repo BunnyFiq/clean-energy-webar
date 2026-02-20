@@ -10,24 +10,25 @@
 
 <style>
 body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-#ui { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.78); color: white; padding: 12px 12px 80px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+#ui { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.85); color: white; padding: 12px 12px 80px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
 #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
-button { padding: 10px 12px; border: 0; border-radius: 12px; background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer; transition: all 0.3s ease; }
-button:hover { transform: scale(1.05); }
+button { padding: 10px 12px; border: 0; border-radius: 12px; background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer; }
 button.secondary { background: #38bdf8; color: #06283d; }
-#demoBtn { display: none; position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%) scale(0); padding: 12px 28px; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: 2px solid rgba(255,255,255,0.3); border-radius: 30px; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5); z-index: 100; }
-#demoBtn.visible { display: block; animation: demoAppear 0.5s forwards, demoPulse 2s infinite; }
-@keyframes demoAppear { to { transform: translateX(-50%) scale(1); opacity: 1; } }
-@keyframes demoPulse { 50% { box-shadow: 0 8px 35px rgba(102, 126, 234, 0.7); } }
+#demoBtn { display: none; position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 12px 28px; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 30px; z-index: 100; }
 input[type="range"] { width: 220px; }
-#info { width: 100%; margin-top: 6px; font-size: 14px; opacity: 0.95; }
+#info { width: 100%; margin-top: 6px; font-size: 14px; }
 </style>
 </head>
 
 <body>
 
-<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+<a-scene embedded
+         arjs="sourceType: webcam;
+               debugUIEnabled: false;
+               detectionMode: mono;
+               trackingMethod: best;
+               maxDetectionRate: 60;">
 
 <a-assets>
 <a-asset-item id="m-fan"  src="3D_MODEL/simple_fan.glb"></a-asset-item>
@@ -37,163 +38,123 @@ input[type="range"] { width: 220px; }
 </a-assets>
 
 <!-- TV MARKER -->
-<a-marker type="pattern" url="MARKER/tv-marker.patt" emitevents="true" id="marker-tv"></a-marker>
+<a-marker type="pattern" url="MARKER/tv-marker.patt"
+          smooth="true" smoothCount="5"
+          emitevents="true" id="marker-tv">
+
+  <a-entity id="device-left" visible="false"></a-entity>
+  <a-entity id="renewable-right" visible="false"></a-entity>
+
+</a-marker>
 
 <!-- FAN MARKER -->
-<a-marker type="pattern" url="MARKER/fan-marker.patt" emitevents="true" id="marker-fan"></a-marker>
+<a-marker type="pattern" url="MARKER/fan-marker.patt"
+          smooth="true" smoothCount="5"
+          emitevents="true" id="marker-fan">
+
+  <a-entity id="device-left" visible="false"></a-entity>
+  <a-entity id="renewable-right" visible="false"></a-entity>
+
+</a-marker>
 
 <!-- BULB MARKER -->
-<a-marker type="pattern" url="MARKER/bulb-marker.patt" emitevents="true" id="marker-bulb"></a-marker>
+<a-marker type="pattern" url="MARKER/bulb-marker.patt"
+          smooth="true" smoothCount="5"
+          emitevents="true" id="marker-bulb">
 
-<!-- ORIGINAL SINGLE DEVICE SYSTEM (UNCHANGED LOGIC SUPPORT) -->
-<a-entity id="device" visible="false"></a-entity>
+  <a-entity id="device-left" visible="false"></a-entity>
+  <a-entity id="renewable-right" visible="false"></a-entity>
 
-<a-entity id="renewablePivot" visible="false">
-  <a-entity id="renewable"></a-entity>
-</a-entity>
+</a-marker>
 
 <a-entity camera></a-entity>
 </a-scene>
 
 <div id="ui">
 <div class="pill" id="status">Status: Waiting for marker…</div>
+
 <div id="row">
-<button onclick="pickDevice('TV')">TV</button>
-<button onclick="pickDevice('Fan')">Fan</button>
-<button onclick="pickDevice('Bulb')">Bulb</button>
-<button class="secondary" onclick="pickRenewable('Solar')">Solar</button>
-<button class="secondary" onclick="pickRenewable('Wind')">Wind</button>
-</div>
-<div id="row">
-<span class="pill">Hours/day: <span id="hoursLabel">4</span></span>
-<input id="hours" type="range" min="1" max="24" value="4" oninput="updateHours(this.value)" />
-<span class="pill">Energy: <span id="energyLabel">--</span> Wh/day</span>
-<span class="pill" id="recommended">Select device & renewable</span>
-</div>
-<div id="info">Select a device and renewable energy source to begin.</div>
+<button onclick="selectRenewable('Solar')">Solar</button>
+<button onclick="selectRenewable('Wind')">Wind</button>
 </div>
 
-<button id="demoBtn" onclick="goDemo()">🎬 Watch Demo</button>
+</div>
 
 <script>
 
-/* ---- YOUR ORIGINAL LOGIC (UNCHANGED) ---- */
+let activeMarker = null;
+let activeDevice = null;
 
-const MODEL_CONFIG = {
-TV:{ pos:'-0.25 0.20 0', scale:'0.3 0.15 0.02', rot:'0 0 0' },
-Fan:{ pos:'-0.25 0.20 0', scale:'0.1 0.1 0.1', rot:'-90 0 0' },
-Bulb:{ pos:'-0.25 0.20 0', scale:'5 5 5', rot:'0 0 0' },
-Solar:{ pos:'0.25 0.20 0', scale:'0.3 0.3 0.3', rot:'-90 0 0' },
-Wind:{ pos:'0.25 0.20 0', scale:'0.3 0.3 0.3', rot:'-90 0 0' }
+const DEVICE_MODEL = {
+  TV: null,
+  Fan: '#m-fan',
+  Bulb: '#m-bulb'
 };
 
-const DEVICE_WATTS = { TV:120, Fan:50, Bulb:10 };
-const DEVICE_MODEL = { Fan:'#m-fan', Bulb:'#m-bulb' };
-const RENEW_MODEL  = { Solar:'#m-solar', Wind:'#m-wind' };
+const RENEW_MODEL = {
+  Solar: '#m-solar',
+  Wind: '#m-wind'
+};
 
-let selectedDevice=null;
-let selectedRenew=null;
-let hoursPerDay=4;
+function showDevice(marker, type){
+  const device = marker.querySelector('#device-left');
+  const renewable = marker.querySelector('#renewable-right');
 
-const deviceEl=()=>document.querySelector('#device');
-const renewPivotEl=()=>document.querySelector('#renewablePivot');
-const renewEl=()=>document.querySelector('#renewable');
-const demoBtn=document.querySelector('#demoBtn');
-const status=document.querySelector('#status');
+  device.setAttribute('visible', true);
+  renewable.setAttribute('visible', false);
+  renewable.removeAttribute('gltf-model');
 
-function whPerDay(w,h){return Math.round(w*h);}
+  device.setAttribute('position', '-0.3 0.2 0');
+  device.setAttribute('scale', type === 'Bulb' ? '5 5 5' : '0.2 0.2 0.2');
 
-function updateUI(){
-document.querySelector('#hoursLabel').textContent=hoursPerDay;
-if(selectedDevice&&selectedRenew){
-const watts=DEVICE_WATTS[selectedDevice];
-const wh=whPerDay(watts,hoursPerDay);
-document.querySelector('#energyLabel').textContent=wh;
-demoBtn.classList.add('visible');
-}else{
-document.querySelector('#energyLabel').textContent='--';
-demoBtn.classList.remove('visible');
-}
-}
+  device.removeAttribute('gltf-model');
+  device.removeAttribute('geometry');
+  device.removeAttribute('material');
 
-function clearEntity(el){
-el.removeAttribute('gltf-model');
-el.removeAttribute('geometry');
-el.removeAttribute('material');
+  if(type === 'TV'){
+    device.setAttribute('geometry','primitive: box');
+    device.setAttribute('material','color: #111');
+  } else {
+    device.setAttribute('gltf-model', DEVICE_MODEL[type]);
+  }
+
+  activeMarker = marker;
+  activeDevice = type;
 }
 
-function applyTransform(el,cfg){
-el.setAttribute('position',cfg.pos);
-el.setAttribute('scale',cfg.scale);
-el.setAttribute('rotation',cfg.rot);
+function selectRenewable(type){
+  if(!activeMarker) return;
+
+  const renewable = activeMarker.querySelector('#renewable-right');
+
+  renewable.setAttribute('visible', true);
+  renewable.setAttribute('position', '0.3 0.2 0');
+  renewable.setAttribute('scale', '0.3 0.3 0.3');
+  renewable.setAttribute('rotation', '-90 0 0');
+  renewable.setAttribute('gltf-model', RENEW_MODEL[type]);
 }
 
-function pickDevice(name){
-selectedDevice=name;
-const d=deviceEl();
-clearEntity(d);
-applyTransform(d,MODEL_CONFIG[name]);
-d.setAttribute('visible',true);
-if(name==='TV'){
-d.setAttribute('geometry','primitive: box');
-d.setAttribute('material','color: #1a1a1a');
-}else{
-d.setAttribute('gltf-model',DEVICE_MODEL[name]);
-}
-updateUI();
+function hideAll(marker){
+  marker.querySelector('#device-left').setAttribute('visible', false);
+  marker.querySelector('#renewable-right').setAttribute('visible', false);
 }
 
-function pickRenewable(type){
-selectedRenew=type;
-const pivot=renewPivotEl();
-const child=renewEl();
-pivot.setAttribute('visible',true);
-applyTransform(pivot,MODEL_CONFIG[type]);
-child.setAttribute('position','0 0 0');
-child.setAttribute('scale','1 1 1');
-child.setAttribute('gltf-model',RENEW_MODEL[type]);
-updateUI();
-}
+['tv','fan','bulb'].forEach(name=>{
+  const marker = document.querySelector(`#marker-${name}`);
+  const type = name.charAt(0).toUpperCase()+name.slice(1);
 
-function updateHours(v){hoursPerDay=Number(v);updateUI();}
+  marker.addEventListener('markerFound',()=>{
+    document.getElementById('status').textContent = `${type} detected ✅`;
+    showDevice(marker, type);
+  });
 
-function goDemo(){
-if(!selectedDevice||!selectedRenew)return;
-const d=selectedDevice.toLowerCase();
-const r=(selectedRenew.toLowerCase()==='wind')?'turbine':'solar';
-location.href=`demo.html?device=${d}&renew=${r}`;
-}
-
-/* ---- ONLY MARKER LOGIC CHANGED ---- */
-
-const markerTV = document.querySelector('#marker-tv');
-const markerFan = document.querySelector('#marker-fan');
-const markerBulb = document.querySelector('#marker-bulb');
-
-function attachTo(marker){
-marker.appendChild(deviceEl());
-marker.appendChild(renewPivotEl());
-}
-
-markerTV.addEventListener('markerFound',()=>{
-status.textContent='TV Marker detected ✅';
-attachTo(markerTV);
-pickDevice('TV');
+  marker.addEventListener('markerLost',()=>{
+    document.getElementById('status').textContent = `Waiting for marker…`;
+    hideAll(marker);
+    activeMarker = null;
+  });
 });
 
-markerFan.addEventListener('markerFound',()=>{
-status.textContent='Fan Marker detected ✅';
-attachTo(markerFan);
-pickDevice('Fan');
-});
-
-markerBulb.addEventListener('markerFound',()=>{
-status.textContent='Bulb Marker detected ✅';
-attachTo(markerBulb);
-pickDevice('Bulb');
-});
-
-updateUI();
 </script>
 
 </body>
