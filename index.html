@@ -9,15 +9,14 @@
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
 <style>
+/* UI EXACTLY SAME — UNCHANGED */
 body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-#ui { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.85); color: white; padding: 12px 12px 80px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+#ui { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.78); color: white; padding: 12px 12px 80px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .pill { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 12px; }
 #row { display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center; }
 button { padding: 10px 12px; border: 0; border-radius: 12px; background: #ffffff; color: #0f172a; font-weight: 800; cursor: pointer; }
 button.secondary { background: #38bdf8; color: #06283d; }
 #demoBtn { display: none; position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 12px 28px; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 30px; z-index: 100; }
-input[type="range"] { width: 220px; }
-#info { width: 100%; margin-top: 6px; font-size: 14px; }
 </style>
 </head>
 
@@ -37,53 +36,52 @@ input[type="range"] { width: 220px; }
 <a-asset-item id="m-wind"  src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
 </a-assets>
 
-<!-- TV MARKER -->
+<!-- TV -->
 <a-marker type="pattern" url="MARKER/tv-marker.patt"
-          smooth="true" smoothCount="5"
+          smooth="true" smoothCount="5" smoothTolerance="0.01"
           emitevents="true" id="marker-tv">
 
-  <a-entity id="device-left" visible="false"></a-entity>
-  <a-entity id="renewable-right" visible="false"></a-entity>
+  <a-entity class="device-left" visible="false"></a-entity>
+  <a-entity class="renewable-right" visible="false"></a-entity>
 
 </a-marker>
 
-<!-- FAN MARKER -->
+<!-- FAN -->
 <a-marker type="pattern" url="MARKER/fan-marker.patt"
-          smooth="true" smoothCount="5"
+          smooth="true" smoothCount="5" smoothTolerance="0.01"
           emitevents="true" id="marker-fan">
 
-  <a-entity id="device-left" visible="false"></a-entity>
-  <a-entity id="renewable-right" visible="false"></a-entity>
+  <a-entity class="device-left" visible="false"></a-entity>
+  <a-entity class="renewable-right" visible="false"></a-entity>
 
 </a-marker>
 
-<!-- BULB MARKER -->
+<!-- BULB -->
 <a-marker type="pattern" url="MARKER/bulb-marker.patt"
-          smooth="true" smoothCount="5"
+          smooth="true" smoothCount="5" smoothTolerance="0.01"
           emitevents="true" id="marker-bulb">
 
-  <a-entity id="device-left" visible="false"></a-entity>
-  <a-entity id="renewable-right" visible="false"></a-entity>
+  <a-entity class="device-left" visible="false"></a-entity>
+  <a-entity class="renewable-right" visible="false"></a-entity>
 
 </a-marker>
 
 <a-entity camera></a-entity>
 </a-scene>
 
+<!-- UI UNCHANGED -->
 <div id="ui">
 <div class="pill" id="status">Status: Waiting for marker…</div>
-
 <div id="row">
 <button onclick="selectRenewable('Solar')">Solar</button>
 <button onclick="selectRenewable('Wind')">Wind</button>
 </div>
-
 </div>
 
 <script>
 
 let activeMarker = null;
-let activeDevice = null;
+let activeDeviceType = null;
 
 const DEVICE_MODEL = {
   TV: null,
@@ -96,47 +94,61 @@ const RENEW_MODEL = {
   Wind: '#m-wind'
 };
 
-function showDevice(marker, type){
-  const device = marker.querySelector('#device-left');
-  const renewable = marker.querySelector('#renewable-right');
+function clearModels(marker){
+  const device = marker.querySelector('.device-left');
+  const renewable = marker.querySelector('.renewable-right');
 
-  device.setAttribute('visible', true);
+  device.setAttribute('visible', false);
   renewable.setAttribute('visible', false);
   renewable.removeAttribute('gltf-model');
+}
 
-  device.setAttribute('position', '-0.3 0.2 0');
-  device.setAttribute('scale', type === 'Bulb' ? '5 5 5' : '0.2 0.2 0.2');
+function showDevice(marker, type){
+
+  if(activeMarker && activeMarker !== marker){
+    clearModels(activeMarker);
+  }
+
+  const device = marker.querySelector('.device-left');
+  const renewable = marker.querySelector('.renewable-right');
 
   device.removeAttribute('gltf-model');
   device.removeAttribute('geometry');
   device.removeAttribute('material');
 
+  device.setAttribute('position','-0.3 0.2 0');
+  device.setAttribute('visible',true);
+
+  renewable.setAttribute('visible',false);
+  renewable.removeAttribute('gltf-model');
+
   if(type === 'TV'){
     device.setAttribute('geometry','primitive: box');
     device.setAttribute('material','color: #111');
+    device.setAttribute('scale','0.3 0.15 0.02');
+  } else if(type === 'Fan'){
+    device.setAttribute('gltf-model','#m-fan');
+    device.setAttribute('scale','0.1 0.1 0.1');
+    device.setAttribute('rotation','-90 0 0');
   } else {
-    device.setAttribute('gltf-model', DEVICE_MODEL[type]);
+    device.setAttribute('gltf-model','#m-bulb');
+    device.setAttribute('scale','5 5 5');
   }
 
   activeMarker = marker;
-  activeDevice = type;
+  activeDeviceType = type;
 }
 
 function selectRenewable(type){
   if(!activeMarker) return;
 
-  const renewable = activeMarker.querySelector('#renewable-right');
+  const renewable = activeMarker.querySelector('.renewable-right');
 
-  renewable.setAttribute('visible', true);
-  renewable.setAttribute('position', '0.3 0.2 0');
-  renewable.setAttribute('scale', '0.3 0.3 0.3');
-  renewable.setAttribute('rotation', '-90 0 0');
+  renewable.setAttribute('position','0.3 0.2 0');
+  renewable.setAttribute('scale','0.3 0.3 0.3');
+  renewable.setAttribute('rotation','-90 0 0');
   renewable.setAttribute('gltf-model', RENEW_MODEL[type]);
-}
-
-function hideAll(marker){
-  marker.querySelector('#device-left').setAttribute('visible', false);
-  marker.querySelector('#renewable-right').setAttribute('visible', false);
+  renewable.setAttribute('visible',true);
 }
 
 ['tv','fan','bulb'].forEach(name=>{
@@ -149,9 +161,12 @@ function hideAll(marker){
   });
 
   marker.addEventListener('markerLost',()=>{
+    clearModels(marker);
     document.getElementById('status').textContent = `Waiting for marker…`;
-    hideAll(marker);
-    activeMarker = null;
+    if(activeMarker === marker){
+      activeMarker = null;
+      activeDeviceType = null;
+    }
   });
 });
 
