@@ -142,8 +142,20 @@ updateDemoButton();
 }
 
 function goDemo(){
-alert("Demo starting...");
+if(!activeMarkerId || !renewableChosen) return;
+
+let device = activeMarkerId;   // tv / fan / bulb
+let renew = document.querySelector(`#renew-${activeMarkerId}`).getAttribute('gltf-model');
+
+if(renew === "#m-solar"){
+renew = "solar";
+}else{
+renew = "wind";
 }
+
+window.location.href = `demo.html?device=${device}&renew=${renew}`;
+}
+
 
 document.querySelector('#marker-tv').addEventListener('markerFound',()=>showDevice("tv","TV"));
 document.querySelector('#marker-fan').addEventListener('markerFound',()=>showDevice("fan","Fan"));
@@ -157,3 +169,4 @@ document.querySelector('#marker-bulb').addEventListener('markerLost',()=>hideAll
 
 </body>
 </html>
+
