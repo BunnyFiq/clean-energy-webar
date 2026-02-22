@@ -32,7 +32,7 @@ font-weight:bold;
 
 <body>
 
-<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
 
 <a-assets>
 <a-asset-item id="m-fan" src="3D_MODEL/simple_fan.glb"></a-asset-item>
@@ -70,13 +70,13 @@ font-weight:bold;
 <script>
 
 let activeMarkerId = null;
-let renewableChosen = false;
+let selectedRenew = null;
 
 const status = document.querySelector('#status');
 const demoBtn = document.querySelector('#demoBtn');
 
 function updateDemoButton(){
-if(activeMarkerId && renewableChosen){
+if(activeMarkerId && selectedRenew){
 demoBtn.style.display = "block";
 }else{
 demoBtn.style.display = "none";
@@ -86,10 +86,14 @@ demoBtn.style.display = "none";
 function showDevice(markerId, type){
 
 activeMarkerId = markerId;
-renewableChosen = false;
+selectedRenew = null;
 
 const device = document.querySelector(`#device-${markerId}`);
+const renew = document.querySelector(`#renew-${markerId}`);
+
 device.setAttribute('visible', true);
+renew.setAttribute('visible', false);
+
 device.removeAttribute('gltf-model');
 device.removeAttribute('geometry');
 device.removeAttribute('material');
@@ -107,6 +111,7 @@ device.setAttribute('rotation','-90 0 0');
 else if(type === "Bulb"){
 device.setAttribute('gltf-model','#m-bulb');
 device.setAttribute('scale','10 10 10');
+device.setAttribute('rotation','0 0 0');
 }
 
 status.textContent = type + " detected ✅";
@@ -114,10 +119,13 @@ updateDemoButton();
 }
 
 function hideAll(markerId){
+
 document.querySelector(`#device-${markerId}`).setAttribute('visible', false);
 document.querySelector(`#renew-${markerId}`).setAttribute('visible', false);
+
 activeMarkerId = null;
-renewableChosen = false;
+selectedRenew = null;
+
 status.textContent = "Waiting for marker...";
 updateDemoButton();
 }
@@ -125,7 +133,10 @@ updateDemoButton();
 function pickRenewable(type){
 if(!activeMarkerId) return;
 
+selectedRenew = type;
+
 const renew = document.querySelector(`#renew-${activeMarkerId}`);
+
 renew.setAttribute('visible', true);
 renew.removeAttribute('gltf-model');
 renew.setAttribute('rotation','-90 0 0');
@@ -137,30 +148,16 @@ renew.setAttribute('gltf-model','#m-solar');
 renew.setAttribute('gltf-model','#m-wind');
 }
 
-renewableChosen = true;
 updateDemoButton();
 }
 
 function goDemo(){
-if(!activeMarkerId || !renewableChosen) return;
+if(!activeMarkerId || !selectedRenew) return;
 
-let device = activeMarkerId;  // tv / fan / bulb
+let renew = selectedRenew === "Solar" ? "solar" : "turbine";
 
-let renewModel = document.querySelector(`#renew-${activeMarkerId}`)
-                     .getAttribute('gltf-model');
-
-let renew;
-
-if(renewModel === "#m-solar"){
-renew = "solar";
-}else{
-renew = "turbine";  // MUST match demo.html
+window.location.href = `demo.html?device=${activeMarkerId}&renew=${renew}`;
 }
-
-window.location.href = `demo.html?device=${device}&renew=${renew}`;
-}
-
-
 
 document.querySelector('#marker-tv').addEventListener('markerFound',()=>showDevice("tv","TV"));
 document.querySelector('#marker-fan').addEventListener('markerFound',()=>showDevice("fan","Fan"));
@@ -174,5 +171,3 @@ document.querySelector('#marker-bulb').addEventListener('markerLost',()=>hideAll
 
 </body>
 </html>
-
-
