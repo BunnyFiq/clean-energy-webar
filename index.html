@@ -70,9 +70,8 @@ marker.appendChild(deviceEl);
 marker.appendChild(renewableEl);
 
 deviceEl.setAttribute('visible', true);
-deviceEl.setAttribute('position', '-0.3 0.2 0');
+deviceEl.setAttribute('position', '-0.4 0.3 0');   // moved slightly up & left
 deviceEl.setAttribute('rotation', '0 0 0');
-deviceEl.setAttribute('scale', '0.2 0.2 0.2');
 
 deviceEl.removeAttribute('gltf-model');
 deviceEl.removeAttribute('geometry');
@@ -81,10 +80,16 @@ deviceEl.removeAttribute('material');
 if(type === "TV"){
 deviceEl.setAttribute('geometry','primitive: box');
 deviceEl.setAttribute('material','color: #111');
-deviceEl.setAttribute('scale','0.3 0.15 0.02');
+deviceEl.setAttribute('scale','0.6 0.3 0.05');   // BIGGER TV
 }
-else{
+else if(type === "Fan"){
 deviceEl.setAttribute('gltf-model', DEVICE_MODEL[type]);
+deviceEl.setAttribute('scale','0.5 0.5 0.5');   // BIGGER Fan
+deviceEl.setAttribute('rotation','-90 0 0');
+}
+else if(type === "Bulb"){
+deviceEl.setAttribute('gltf-model', DEVICE_MODEL[type]);
+deviceEl.setAttribute('scale','10 10 10');   // MUCH bigger Bulb
 }
 
 renewableEl.setAttribute('visible', false);
@@ -96,9 +101,9 @@ function pickRenewable(type){
 if(!activeMarker) return;
 
 renewableEl.setAttribute('visible', true);
-renewableEl.setAttribute('position', '0.3 0.2 0');
+renewableEl.setAttribute('position', '0.4 0.3 0');
 renewableEl.setAttribute('rotation', '-90 0 0');
-renewableEl.setAttribute('scale', '0.2 0.2 0.2');
+renewableEl.setAttribute('scale', '0.4 0.4 0.4');
 renewableEl.setAttribute('gltf-model', RENEW_MODEL[type]);
 }
 
