@@ -28,9 +28,9 @@ button.secondary { background: #38bdf8; }
 <a-asset-item id="m-wind" src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
 </a-assets>
 
-<a-marker type="pattern" url="MARKER/tv-marker.patt" id="marker-tv"></a-marker>
-<a-marker type="pattern" url="MARKER/fan-marker.patt" id="marker-fan"></a-marker>
-<a-marker type="pattern" url="MARKER/bulb-marker.patt" id="marker-bulb"></a-marker>
+<a-marker type="pattern" url="MARKER/tv-marker.patt" id="marker-tv" emitevents="true"></a-marker>
+<a-marker type="pattern" url="MARKER/fan-marker.patt" id="marker-fan" emitevents="true"></a-marker>
+<a-marker type="pattern" url="MARKER/bulb-marker.patt" id="marker-bulb" emitevents="true"></a-marker>
 
 <a-entity id="device" visible="false"></a-entity>
 <a-entity id="renewable" visible="false"></a-entity>
@@ -57,20 +57,17 @@ Solar: "#m-solar",
 Wind: "#m-wind"
 };
 
-let currentDevice = null;
+let activeMarker = null;
 
 const deviceEl = document.querySelector('#device');
 const renewableEl = document.querySelector('#renewable');
 const status = document.querySelector('#status');
 
-function attachTo(marker){
+function showDevice(type, marker){
+
+activeMarker = marker;
 marker.appendChild(deviceEl);
 marker.appendChild(renewableEl);
-}
-
-function showDevice(type, marker){
-currentDevice = type;
-attachTo(marker);
 
 deviceEl.setAttribute('visible', true);
 deviceEl.setAttribute('position', '-0.3 0.2 0');
@@ -79,35 +76,37 @@ deviceEl.setAttribute('scale', '0.2 0.2 0.2');
 
 deviceEl.removeAttribute('gltf-model');
 deviceEl.removeAttribute('geometry');
+deviceEl.removeAttribute('material');
 
 if(type === "TV"){
 deviceEl.setAttribute('geometry','primitive: box');
 deviceEl.setAttribute('material','color: #111');
-}else{
+deviceEl.setAttribute('scale','0.3 0.15 0.02');
+}
+else{
 deviceEl.setAttribute('gltf-model', DEVICE_MODEL[type]);
 }
 
 renewableEl.setAttribute('visible', false);
+
 status.textContent = type + " detected ✅";
 }
 
 function pickRenewable(type){
-if(!currentDevice) return;
+if(!activeMarker) return;
 
 renewableEl.setAttribute('visible', true);
 renewableEl.setAttribute('position', '0.3 0.2 0');
 renewableEl.setAttribute('rotation', '-90 0 0');
 renewableEl.setAttribute('scale', '0.2 0.2 0.2');
-
-renewableEl.removeAttribute('gltf-model');
 renewableEl.setAttribute('gltf-model', RENEW_MODEL[type]);
 }
 
 function hideAll(){
 deviceEl.setAttribute('visible', false);
 renewableEl.setAttribute('visible', false);
-currentDevice = null;
 status.textContent = "Waiting for marker...";
+activeMarker = null;
 }
 
 document.querySelector('#marker-tv').addEventListener('markerFound', e=>{
