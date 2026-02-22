@@ -144,17 +144,22 @@ updateDemoButton();
 function goDemo(){
 if(!activeMarkerId || !renewableChosen) return;
 
-let device = activeMarkerId;   // tv / fan / bulb
-let renew = document.querySelector(`#renew-${activeMarkerId}`).getAttribute('gltf-model');
+let device = activeMarkerId;  // tv / fan / bulb
 
-if(renew === "#m-solar"){
+let renewModel = document.querySelector(`#renew-${activeMarkerId}`)
+                     .getAttribute('gltf-model');
+
+let renew;
+
+if(renewModel === "#m-solar"){
 renew = "solar";
 }else{
-renew = "wind";
+renew = "turbine";  // MUST match demo.html
 }
 
 window.location.href = `demo.html?device=${device}&renew=${renew}`;
 }
+
 
 
 document.querySelector('#marker-tv').addEventListener('markerFound',()=>showDevice("tv","TV"));
@@ -169,4 +174,5 @@ document.querySelector('#marker-bulb').addEventListener('markerLost',()=>hideAll
 
 </body>
 </html>
+
 
