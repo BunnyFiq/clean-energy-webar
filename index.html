@@ -28,12 +28,23 @@ button.secondary { background: #38bdf8; }
 <a-asset-item id="m-wind" src="3D_MODEL/Wind_Turbine.glb"></a-asset-item>
 </a-assets>
 
-<a-marker type="pattern" url="MARKER/tv-marker.patt" id="marker-tv" emitevents="true"></a-marker>
-<a-marker type="pattern" url="MARKER/fan-marker.patt" id="marker-fan" emitevents="true"></a-marker>
-<a-marker type="pattern" url="MARKER/bulb-marker.patt" id="marker-bulb" emitevents="true"></a-marker>
+<!-- TV MARKER -->
+<a-marker type="pattern" url="MARKER/tv-marker.patt" emitevents="true" id="marker-tv">
+  <a-entity id="device-tv" position="-0.4 0.3 0" visible="false"></a-entity>
+  <a-entity id="renew-tv" position="0.4 0.3 0" visible="false"></a-entity>
+</a-marker>
 
-<a-entity id="device" visible="false"></a-entity>
-<a-entity id="renewable" visible="false"></a-entity>
+<!-- FAN MARKER -->
+<a-marker type="pattern" url="MARKER/fan-marker.patt" emitevents="true" id="marker-fan">
+  <a-entity id="device-fan" position="-0.4 0.3 0" visible="false"></a-entity>
+  <a-entity id="renew-fan" position="0.4 0.3 0" visible="false"></a-entity>
+</a-marker>
+
+<!-- BULB MARKER -->
+<a-marker type="pattern" url="MARKER/bulb-marker.patt" emitevents="true" id="marker-bulb">
+  <a-entity id="device-bulb" position="-0.4 0.3 0" visible="false"></a-entity>
+  <a-entity id="renew-bulb" position="0.4 0.3 0" visible="false"></a-entity>
+</a-marker>
 
 <a-entity camera></a-entity>
 </a-scene>
@@ -46,98 +57,69 @@ button.secondary { background: #38bdf8; }
 
 <script>
 
-const DEVICE_MODEL = {
-TV: null,
-Fan: "#m-fan",
-Bulb: "#m-bulb"
-};
+let activeMarkerId = null;
 
-const RENEW_MODEL = {
-Solar: "#m-solar",
-Wind: "#m-wind"
-};
-
-let activeMarker = null;
-let activeDevice = null;
-
-const deviceEl = document.querySelector('#device');
-const renewableEl = document.querySelector('#renewable');
 const status = document.querySelector('#status');
 
-function clearModels(){
-deviceEl.removeAttribute('gltf-model');
-deviceEl.removeAttribute('geometry');
-deviceEl.removeAttribute('material');
-renewableEl.removeAttribute('gltf-model');
-}
+function showDevice(markerId, type){
 
-function showDevice(type, marker){
+activeMarkerId = markerId;
 
-activeMarker = marker;
-activeDevice = type;
-
-marker.appendChild(deviceEl);
-marker.appendChild(renewableEl);
-
-clearModels();
-
-deviceEl.setAttribute('visible', true);
-deviceEl.setAttribute('position', '-0.4 0.3 0');
+const device = document.querySelector(`#device-${markerId}`);
+device.setAttribute('visible', true);
+device.removeAttribute('gltf-model');
+device.removeAttribute('geometry');
+device.removeAttribute('material');
 
 if(type === "TV"){
-deviceEl.setAttribute('geometry','primitive: box');
-deviceEl.setAttribute('material','color: #111');
-deviceEl.setAttribute('scale','0.6 0.3 0.05');
+device.setAttribute('geometry','primitive: box');
+device.setAttribute('material','color: #111');
+device.setAttribute('scale','0.6 0.3 0.05');
 }
 else if(type === "Fan"){
-deviceEl.setAttribute('gltf-model', DEVICE_MODEL[type]);
-deviceEl.setAttribute('scale','0.5 0.5 0.5');
-deviceEl.setAttribute('rotation','-90 0 0');
+device.setAttribute('gltf-model','#m-fan');
+device.setAttribute('scale','0.5 0.5 0.5');
+device.setAttribute('rotation','-90 0 0');
 }
 else if(type === "Bulb"){
-deviceEl.setAttribute('gltf-model', DEVICE_MODEL[type]);
-deviceEl.setAttribute('scale','10 10 10');
+device.setAttribute('gltf-model','#m-bulb');
+device.setAttribute('scale','10 10 10');
 }
-
-renewableEl.setAttribute('visible', false);
 
 status.textContent = type + " detected ✅";
 }
 
-function pickRenewable(type){
-if(!activeMarker) return;
-
-renewableEl.setAttribute('visible', true);
-renewableEl.setAttribute('position', '0.4 0.3 0');
-renewableEl.setAttribute('rotation', '-90 0 0');
-renewableEl.setAttribute('scale', '0.4 0.4 0.4');
-
-renewableEl.removeAttribute('gltf-model');
-renewableEl.setAttribute('gltf-model', RENEW_MODEL[type]);
-}
-
-function hideAll(){
-deviceEl.setAttribute('visible', false);
-renewableEl.setAttribute('visible', false);
-clearModels();
-activeMarker = null;
-activeDevice = null;
+function hideAll(markerId){
+document.querySelector(`#device-${markerId}`).setAttribute('visible', false);
+document.querySelector(`#renew-${markerId}`).setAttribute('visible', false);
+activeMarkerId = null;
 status.textContent = "Waiting for marker...";
 }
 
-document.querySelector('#marker-tv').addEventListener('markerFound', e=>{
-showDevice("TV", e.target);
-});
-document.querySelector('#marker-fan').addEventListener('markerFound', e=>{
-showDevice("Fan", e.target);
-});
-document.querySelector('#marker-bulb').addEventListener('markerFound', e=>{
-showDevice("Bulb", e.target);
-});
+function pickRenewable(type){
+if(!activeMarkerId) return;
 
-document.querySelector('#marker-tv').addEventListener('markerLost', hideAll);
-document.querySelector('#marker-fan').addEventListener('markerLost', hideAll);
-document.querySelector('#marker-bulb').addEventListener('markerLost', hideAll);
+const renew = document.querySelector(`#renew-${activeMarkerId}`);
+renew.setAttribute('visible', true);
+renew.removeAttribute('gltf-model');
+renew.setAttribute('rotation','-90 0 0');
+renew.setAttribute('scale','0.4 0.4 0.4');
+
+if(type === "Solar"){
+renew.setAttribute('gltf-model','#m-solar');
+}
+else{
+renew.setAttribute('gltf-model','#m-wind');
+}
+}
+
+document.querySelector('#marker-tv').addEventListener('markerFound',()=>showDevice("tv","TV"));
+document.querySelector('#marker-fan').addEventListener('markerFound',()=>showDevice("fan","Fan"));
+document.querySelector('#marker-bulb').addEventListener('markerFound',()=>showDevice("bulb","Bulb"));
+
+document.querySelector('#marker-tv').addEventListener('markerLost',()=>hideAll("tv"));
+document.querySelector('#marker-fan').addEventListener('markerLost',()=>hideAll("fan"));
+document.querySelector('#marker-bulb').addEventListener('markerLost',()=>hideAll("bulb"));
 
 </script>
 
