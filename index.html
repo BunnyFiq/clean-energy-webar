@@ -85,8 +85,8 @@ demoBtn.style.display = "none";
 
 function showDevice(markerId, type){
 
-activeMarkerId = markerId;
-selectedRenew = null;
+// SAFETY: Only allow if marker is really active
+if(activeMarkerId !== markerId) return;
 
 const device = document.querySelector(`#device-${markerId}`);
 const renew = document.querySelector(`#renew-${markerId}`);
@@ -120,8 +120,11 @@ updateDemoButton();
 
 function hideAll(markerId){
 
-document.querySelector(`#device-${markerId}`).setAttribute('visible', false);
-document.querySelector(`#renew-${markerId}`).setAttribute('visible', false);
+const device = document.querySelector(`#device-${markerId}`);
+const renew = document.querySelector(`#renew-${markerId}`);
+
+device.setAttribute('visible', false);
+renew.setAttribute('visible', false);
 
 activeMarkerId = null;
 selectedRenew = null;
@@ -155,19 +158,34 @@ function goDemo(){
 if(!activeMarkerId || !selectedRenew) return;
 
 let renew = selectedRenew === "Solar" ? "solar" : "turbine";
-
 window.location.href = `demo.html?device=${activeMarkerId}&renew=${renew}`;
 }
 
-document.querySelector('#marker-tv').addEventListener('markerFound',()=>showDevice("tv","TV"));
-document.querySelector('#marker-fan').addEventListener('markerFound',()=>showDevice("fan","Fan"));
-document.querySelector('#marker-bulb').addEventListener('markerFound',()=>showDevice("bulb","Bulb"));
+// -------- STABLE MARKER EVENTS --------
 
-document.querySelector('#marker-tv').addEventListener('markerLost',()=>hideAll("tv"));
-document.querySelector('#marker-fan').addEventListener('markerLost',()=>hideAll("fan"));
-document.querySelector('#marker-bulb').addEventListener('markerLost',()=>hideAll("bulb"));
+function setupMarker(markerId, type){
+
+const marker = document.querySelector(`#marker-${markerId}`);
+
+marker.addEventListener('markerFound', () => {
+activeMarkerId = markerId;
+selectedRenew = null;
+showDevice(markerId, type);
+});
+
+marker.addEventListener('markerLost', () => {
+hideAll(markerId);
+});
+
+}
+
+setupMarker("tv", "TV");
+setupMarker("fan", "Fan");
+setupMarker("bulb", "Bulb");
 
 </script>
 
+
 </body>
 </html>
+
