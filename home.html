@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clean Energy AR Explorer</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+overflow:hidden;
+}
+
+.container{
+text-align:center;
+max-width:500px;
+padding:40px;
+animation:fadeIn 1s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(20px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+h1{
+font-size:32px;
+margin-bottom:15px;
+}
+
+p{
+opacity:.8;
+margin-bottom:30px;
+line-height:1.6;
+}
+
+.start-btn{
+padding:16px 40px;
+font-size:18px;
+font-weight:bold;
+border:none;
+border-radius:30px;
+background:linear-gradient(135deg,#667eea,#764ba2);
+color:white;
+cursor:pointer;
+transition:.3s;
+box-shadow:0 8px 30px rgba(102,126,234,.4);
+}
+
+.start-btn:hover{
+transform:translateY(-3px);
+box-shadow:0 12px 40px rgba(102,126,234,.6);
+}
+
+.footer{
+position:absolute;
+bottom:20px;
+font-size:13px;
+opacity:.6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>⚡ Clean Energy AR Explorer</h1>
+
+<p>
+Experience how renewable energy powers everyday devices using Augmented Reality.
+Scan a marker and explore Solar and Wind energy simulations in real time.
+</p>
+
+<button class="start-btn" onclick="startAR()">🚀 Start AR Experience</button>
+</div>
+
+<div class="footer">
+© 2026 Clean Energy AR Project
+</div>
+
+<script>
+function startAR(){
+window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
